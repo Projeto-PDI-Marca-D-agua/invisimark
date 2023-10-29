@@ -1,0 +1,7 @@
+[default]
+EXTENSIONS=[
+    
+    "invisimark.blueprints.views"
+]
+
+[development]
