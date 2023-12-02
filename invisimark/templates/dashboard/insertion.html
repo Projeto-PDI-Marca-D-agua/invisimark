@@ -1,10 +1,10 @@
 {% extends "base_layout.html" %} {% block content %}
 <div class="flex flex-col py-10 items-center justify-center w-full">
-  <h1 class="font-semibold text-3xl text-white pb-4">Inserir marca d'água</h1>
-  <div class="w-4/5 bg-gray-800 p-10 rounded-xl">
+  <h1 class="font-semibold text-3xl pb-4 dark:text-white">Inserir marca d'água</h1>
+  <div class="w-4/5 bg-white p-10 rounded-xl shadow dark:border md:mt-0 dark:bg-gray-800 dark:border-gray-700">
     <form class="flex flex-col gap-5">
       <div class="flex flex-col items-center justify-center w-full">
-        <h3 class="font-medium text-xl text-white pb-2">
+        <h3 class="font-medium text-xl font-semibold pb-2 dark:text-white">
           Selecione sua imagem
         </h3>
         <label
@@ -74,7 +74,7 @@
 
       <button
         type="submit"
-        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-0.1 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
       >
         Inserir
       </button>
