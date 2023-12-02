@@ -1,6 +1,5 @@
 [default]
 EXTENSIONS=[
-    
     "invisimark.blueprints.views"
 ]
 
