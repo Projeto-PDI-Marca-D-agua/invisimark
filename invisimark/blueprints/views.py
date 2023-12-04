@@ -1,12 +1,24 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash, send_file
+from invisimark.services.dct_image import DCTImage
+from invisimark.services.dct_text import DCTText
+from werkzeug.utils import secure_filename
+import os
+import cv2
 
 users = [
     {"email": "user1@example.com", "password": "password1"},
     {"email": "user2@example.com", "password": "password2"},
 ]
 
+UPLOAD_FOLDER = 'D:\Repositories\invisimark\images'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 def init_app(app):
+
+    app.secret_key = 'super secret key'
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
     @app.route("/")
     def index():
         return render_template("index.html")
@@ -43,10 +55,46 @@ def init_app(app):
     def dashboard():
         return render_template('dashboard/index.html')
 
-    @app.route('/dashboard/insertion')
+    @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     def insertion():
+        if request.method == 'POST':
+            if 'image' not in request.files:
+                flash('Nenhum arquivo enviado')
+                return redirect(request.url)
+
+            file = request.files['image']
+            marca = request.form['marca']
+
+            if file.filename == '':
+                flash('Nenhum arquivo selecionado')
+                return redirect(request.url)
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+
+                # Carregue a imagem a partir do arquivo
+                original_image = cv2.imread(file_path)
+
+                # Chame a função correta da classe DCTText
+                marked_image = DCTText.rgb_insert_texto(original_image, marca, 0.1)
+
+                # Salve a imagem marcada, se necessário
+                cv2.imwrite(file_path, marked_image)
+
+                # Use send_file para enviar a imagem marcada como resposta
+                return send_file(file_path, as_attachment=True)
+
+            else:
+                flash('Extensão de arquivo inválida')
+                return redirect(url_for('dashboard'))
+
         return render_template('dashboard/insertion.html')
 
     @app.route('/dashboard/myprofile')
     def myprofile():
         return render_template('dashboard/myprofile.html')
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

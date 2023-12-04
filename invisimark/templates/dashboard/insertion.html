@@ -2,7 +2,12 @@
 <div class="flex flex-col py-10 items-center justify-center w-full">
   <h1 class="font-semibold text-3xl text-white pb-4">Inserir marca d'água</h1>
   <div class="w-4/5 bg-gray-800 p-10 rounded-xl">
-    <form class="flex flex-col gap-5">
+    <form
+      class="flex flex-col gap-5"
+      method="post"
+      action="/dashboard/insertion"
+      enctype="multipart/form-data"
+    >
       <div class="flex flex-col items-center justify-center w-full">
         <h3 class="font-medium text-xl text-white pb-2">
           Selecione sua imagem
@@ -35,7 +40,7 @@
               SVG, PNG, JPG or GIF (MAX. 800x400px)
             </p>
           </div>
-          <input id="dropzone-file" name="file" type="file" class="hidden" />
+          <input id="dropzone-file" name="image" type="file" class="hidden" />
         </label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 pb-5">
@@ -46,7 +51,8 @@
             >Selecionar marca</label
           >
           <select
-            id="countries"
+            id="marca"
+            name="marca"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           >
             <option selected>Escolha uma marca</option>
