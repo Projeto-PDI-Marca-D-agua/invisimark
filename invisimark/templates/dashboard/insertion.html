@@ -51,30 +51,23 @@
             >Selecionar marca</label
           >
           <select
-            id="marca"
-            name="marca"
+            id="tipo"
+            name="tipo"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            onchange="handleTipoChange(this)"
           >
-            <option selected>Escolha uma marca</option>
-            <option value="US">Marca 1</option>
-            <option value="CA">Marca 2</option>
-            <option value="FR">Marca 3</option>
+            <option selected>Escolha o tipo</option>
+            <option value="imagem">Imagem</option>
+            <option value="texto">Texto</option>
           </select>
         </div>
         <div>
           <label
-            for="robustez"
+            for="marca"
             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >Selecionar tipo de robustez</label
+            >Escolha a marca</label
           >
-          <select
-            id="robustez"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          >
-            <option selected>Escolha a robustez</option>
-            <option value="US">Fraca</option>
-            <option value="CA">Forte</option>
-          </select>
+          <div id="additionalInputContainer" style="display: none"></div>
         </div>
       </div>
 
@@ -87,4 +80,38 @@
     </form>
   </div>
 </div>
+
+<script>
+  function handleTipoChange(selectElement) {
+    const tipo = selectElement.value;
+    const additionalInputContainer = document.getElementById(
+      "additionalInputContainer"
+    );
+
+    // Clear existing content in the container
+    additionalInputContainer.innerHTML = "";
+
+    if (tipo === "imagem") {
+      // If 'Imagem' is selected, add a file input
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.name = "imagemInput";
+      fileInput.className =
+        "border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500";
+      additionalInputContainer.appendChild(fileInput);
+    } else if (tipo === "texto") {
+      // If 'Texto' is selected, add a text input
+      const textInput = document.createElement("input");
+      textInput.type = "text";
+      textInput.name = "textoInput";
+      textInput.className =
+        "border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500";
+      additionalInputContainer.appendChild(textInput);
+    }
+
+    // Show the container
+    additionalInputContainer.style.display = "block";
+  }
+</script>
+
 {% endblock %}

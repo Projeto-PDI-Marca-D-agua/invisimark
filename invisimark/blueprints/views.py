@@ -10,7 +10,7 @@ users = [
     {"email": "user2@example.com", "password": "password2"},
 ]
 
-UPLOAD_FOLDER = 'D:\Repositories\invisimark\images'
+UPLOAD_FOLDER = 'D:\Repositories\invisimark\images\insertion'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 def init_app(app):
@@ -74,16 +74,12 @@ def init_app(app):
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(file_path)
 
-                # Carregue a imagem a partir do arquivo
                 original_image = cv2.imread(file_path)
 
-                # Chame a função correta da classe DCTText
                 marked_image = DCTText.rgb_insert_texto(original_image, marca, 0.1)
 
-                # Salve a imagem marcada, se necessário
                 cv2.imwrite(file_path, marked_image)
 
-                # Use send_file para enviar a imagem marcada como resposta
                 return send_file(file_path, as_attachment=True)
 
             else:
