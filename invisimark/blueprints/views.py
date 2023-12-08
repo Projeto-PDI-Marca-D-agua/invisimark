@@ -1,6 +1,7 @@
-from flask import render_template, request, redirect, url_for, flash, send_file
+from flask import render_template, request, redirect, url_for, flash, send_file, send_from_directory
 from invisimark.services.dct_image import DCTImage
 from invisimark.services.dct_text import DCTText
+from invisimark.services.dwt_image import DWTImage
 from werkzeug.utils import secure_filename
 import os
 import cv2
@@ -55,7 +56,7 @@ def init_app(app):
     def dashboard():
         return render_template('dashboard/index.html')
 
-    @app.route('/dashboard/insertion', methods=['GET', 'POST'])
+    @app.route('/dashboard/insertion', methods=['GET','POST'])
     def insertion():
         if request.method == 'POST':
             if 'image' not in request.files:
@@ -63,7 +64,9 @@ def init_app(app):
                 return redirect(request.url)
 
             file = request.files['image']
-            marca = request.form['marca']
+            insertion_type = request.form['insertion_type']
+            watermark_file = request.files.get('watermark_file')
+            watermark_text = request.form.get('watermark_text')
 
             if file.filename == '':
                 flash('Nenhum arquivo selecionado')
@@ -76,21 +79,35 @@ def init_app(app):
 
                 original_image = cv2.imread(file_path)
 
-                marked_image = DCTText.rgb_insert_texto(original_image, marca, 0.1)
+                marked_image = perform_insertion(original_image, insertion_type, 0.1, watermark_file, watermark_text)
 
-                cv2.imwrite(file_path, marked_image)
-
-                return send_file(file_path, as_attachment=True)
+                if marked_image is not None:
+                    cv2.imwrite(file_path, marked_image)
+                    return send_file(file_path, as_attachment=True)
 
             else:
                 flash('Extensão de arquivo inválida')
-                return redirect(url_for('dashboard'))
+
+            return redirect(url_for('dashboard'))
 
         return render_template('dashboard/insertion.html')
-
+    
     @app.route('/dashboard/myprofile')
     def myprofile():
         return render_template('dashboard/myprofile.html')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None, text=None):
+    if insertion_type == 'image_dct':
+        marked_image = DCTImage.rgb_insert_dct_blocks(original_image, watermark, alpha)
+    elif insertion_type == 'image_dwt':
+        marked_image = DWTImage.embed_watermark_HH_blocks(original_image, watermark, alpha)
+    elif insertion_type == 'text_dct':
+        marked_image = DCTText.rgb_insert_texto(original_image, text, alpha)
+    else:
+        flash('Tipo de inserção não suportado')
+        return None
+
+    return marked_image

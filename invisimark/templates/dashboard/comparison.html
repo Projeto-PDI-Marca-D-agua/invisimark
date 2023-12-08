@@ -1,0 +1,24 @@
+{% extends "base_layout.html" %} {% block content %}
+<h1>Image Comparison</h1>
+<p>Selecione as imagens para comparação:</p>
+
+<form
+  action="{{ url_for('compare_images') }}"
+  method="POST"
+  enctype="multipart/form-data"
+>
+  <label for="original_image">Imagem Original:</label>
+  <input type="file" name="original_image" accept="image/*" required />
+
+  <label for="marked_image">Imagem Marcada:</label>
+  <input type="file" name="marked_image" accept="image/*" required />
+
+  <button type="submit">Comparar Imagens</button>
+</form>
+
+<p>ou</p>
+
+<h1>Result of Image Comparison</h1>
+<p>{{ result }}</p>
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+{% endblock %}

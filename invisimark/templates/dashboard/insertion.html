@@ -1,19 +1,17 @@
 {% extends "base_layout.html" %} {% block content %}
 <div class="flex flex-col py-10 items-center justify-center w-full">
-  <h1 class="font-semibold text-3xl text-white pb-4">Inserir marca d'água</h1>
+  <h1 class="font-semibold text-3xl text-white pb-4">Insertion Form</h1>
   <div class="w-4/5 bg-gray-800 p-10 rounded-xl">
     <form
       class="flex flex-col gap-5"
-      method="post"
       action="/dashboard/insertion"
+      method="post"
       enctype="multipart/form-data"
     >
       <div class="flex flex-col items-center justify-center w-full">
-        <h3 class="font-medium text-xl text-white pb-2">
-          Selecione sua imagem
-        </h3>
+        <h3 class="font-medium text-xl text-white pb-2">Select your image</h3>
         <label
-          for="dropzone-file"
+          for="image"
           class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
         >
           <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -40,77 +38,72 @@
               SVG, PNG, JPG or GIF (MAX. 800x400px)
             </p>
           </div>
-          <input id="dropzone-file" name="image" type="file" class="hidden" />
+          <input id="image" name="image" type="file" class="hidden" />
         </label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 pb-5">
         <div>
           <label
-            for="mark"
+            for="insertion_type"
             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >Selecionar marca</label
+            >Insertion Type</label
           >
           <select
-            id="tipo"
-            name="tipo"
+            id="insertion_type"
+            name="insertion_type"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            onchange="handleTipoChange(this)"
+            onchange="toggleWatermarkInput(this)"
+            required
           >
-            <option selected>Escolha o tipo</option>
-            <option value="imagem">Imagem</option>
-            <option value="texto">Texto</option>
+            <option value="" disabled selected>Selecione uma opção</option>
+            <option value="image_dct">Image DCT</option>
+            <option value="image_dwt">Image DWT</option>
+            <option value="text_dct">Text DCT</option>
           </select>
         </div>
-        <div>
-          <label
-            for="marca"
-            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >Escolha a marca</label
-          >
-          <div id="additionalInputContainer" style="display: none"></div>
-        </div>
+        <div id="watermarkInputsContainer"></div>
       </div>
 
       <button
         type="submit"
         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
       >
-        Inserir
+        Insert
       </button>
     </form>
   </div>
 </div>
 
 <script>
-  function handleTipoChange(selectElement) {
-    const tipo = selectElement.value;
-    const additionalInputContainer = document.getElementById(
-      "additionalInputContainer"
+  function toggleWatermarkInput(selectElement) {
+    const insertionType = selectElement.value;
+    const watermarkInputsContainer = document.getElementById(
+      "watermarkInputsContainer"
     );
 
     // Clear existing content in the container
-    additionalInputContainer.innerHTML = "";
+    watermarkInputsContainer.innerHTML = "";
 
-    if (tipo === "imagem") {
-      // If 'Imagem' is selected, add a file input
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.name = "imagemInput";
-      fileInput.className =
+    if (insertionType === "image_dct" || insertionType === "image_dwt") {
+      // If 'Image' is selected, add a file input
+      const watermarkFileInput = document.createElement("input");
+      watermarkFileInput.type = "file";
+      watermarkFileInput.name = "watermark_file";
+      watermarkFileInput.className =
         "border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500";
-      additionalInputContainer.appendChild(fileInput);
-    } else if (tipo === "texto") {
-      // If 'Texto' is selected, add a text input
-      const textInput = document.createElement("input");
-      textInput.type = "text";
-      textInput.name = "textoInput";
-      textInput.className =
+      watermarkInputsContainer.appendChild(watermarkFileInput);
+    } else if (insertionType === "text_dct") {
+      // If 'Text' is selected, add a text input
+      const watermarkTextInput = document.createElement("input");
+      watermarkTextInput.type = "text";
+      watermarkTextInput.name = "watermark_text";
+      watermarkTextInput.className =
         "border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500";
-      additionalInputContainer.appendChild(textInput);
+      watermarkInputsContainer.appendChild(watermarkTextInput);
     }
 
     // Show the container
-    additionalInputContainer.style.display = "block";
+    watermarkInputsContainer.style.display = "block";
   }
 </script>
 
