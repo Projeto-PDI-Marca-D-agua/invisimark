@@ -15,9 +15,11 @@ users = [
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
-image_directory = 'images/isertion'
+project_directory = os.path.dirname(os.path.dirname(os.path.dirname(
+    current_directory)))
+image_directory = 'images/insertion'
 
-UPLOAD_FOLDER = os.path.join(current_directory, image_directory)
+UPLOAD_FOLDER = os.path.join(project_directory, 'invisimark', image_directory)
 
 
 def init_app(app):
