@@ -2,6 +2,7 @@ import cv2
 import pywt
 import numpy as np
 
+
 class DWTImage:
     @staticmethod
     def embed_watermark_HH_blocks(image, watermark, alpha):
@@ -20,20 +21,23 @@ class DWTImage:
 
         # Divide a marca d'água RGB em canais
         watermark_b, watermark_g, watermark_r = cv2.split(watermark)
-        watermark_b_resized = cv2.resize(watermark_b, (HH_b.shape[1] // 3, HH_b.shape[0] // 3))
-        watermark_g_resized = cv2.resize(watermark_g, (HH_g.shape[1] // 3, HH_g.shape[0] // 3))
-        watermark_r_resized = cv2.resize(watermark_r, (HH_r.shape[1] // 3, HH_r.shape[0] // 3))
+        watermark_b_resized = cv2.resize(
+            watermark_b, (HH_b.shape[1] // 3, HH_b.shape[0] // 3))
+        watermark_g_resized = cv2.resize(
+            watermark_g, (HH_g.shape[1] // 3, HH_g.shape[0] // 3))
+        watermark_r_resized = cv2.resize(
+            watermark_r, (HH_r.shape[1] // 3, HH_r.shape[0] // 3))
 
         # Itera sobre os blocos e insere a marca d'água em cada bloco no coeficiente HH
         for i in range(3):
             for j in range(3):
                 # Insere a marca d'água nos coeficientes HH de cada bloco diretamente
                 HH_b[i * (HH_b.shape[0] // 3): (i + 1) * (HH_b.shape[0] // 3),
-                j * (HH_b.shape[1] // 3): (j + 1) * (HH_b.shape[1] // 3)] += alpha * watermark_b_resized
+                     j * (HH_b.shape[1] // 3): (j + 1) * (HH_b.shape[1] // 3)] += alpha * watermark_b_resized
                 HH_g[i * (HH_g.shape[0] // 3): (i + 1) * (HH_g.shape[0] // 3),
-                j * (HH_g.shape[1] // 3): (j + 1) * (HH_g.shape[1] // 3)] += alpha * watermark_g_resized
+                     j * (HH_g.shape[1] // 3): (j + 1) * (HH_g.shape[1] // 3)] += alpha * watermark_g_resized
                 HH_r[i * (HH_r.shape[0] // 3): (i + 1) * (HH_r.shape[0] // 3),
-                j * (HH_r.shape[1] // 3): (j + 1) * (HH_r.shape[1] // 3)] += alpha * watermark_r_resized
+                     j * (HH_r.shape[1] // 3): (j + 1) * (HH_r.shape[1] // 3)] += alpha * watermark_r_resized
 
         # Reconstrói os canais da imagem com a DWT inversa
         watermarked_b = pywt.idwt2((LL_b, (LH_b, HL_b, HH_b)), 'haar')
@@ -41,7 +45,8 @@ class DWTImage:
         watermarked_r = pywt.idwt2((LL_r, (LH_r, HL_r, HH_r)), 'haar')
 
         # Combina os canais para obter a imagem RGB marcada d'água
-        watermarked_image = cv2.merge((watermarked_b, watermarked_g, watermarked_r))
+        watermarked_image = cv2.merge(
+            (watermarked_b, watermarked_g, watermarked_r))
 
         return watermarked_image
 
@@ -79,7 +84,8 @@ class DWTImage:
         watermark_extracted_r = (HH_rW - HH_r) / alpha
 
         # Combinando os canais extraídos para obter a marca d'água completa
-        watermark_extracted = cv2.merge((watermark_extracted_b, watermark_extracted_g, watermark_extracted_r))
+        watermark_extracted = cv2.merge(
+            (watermark_extracted_b, watermark_extracted_g, watermark_extracted_r))
 
         # Divide a imagem extraída em 9 blocos
         block_size_x = watermark_extracted.shape[0] // 3
@@ -90,7 +96,7 @@ class DWTImage:
         for i in range(3):
             for j in range(3):
                 block = watermark_extracted[i * block_size_x: (i + 1) * block_size_x,
-                        j * block_size_y: (j + 1) * block_size_y]
+                                            j * block_size_y: (j + 1) * block_size_y]
                 extracted_watermarks.append(block)
 
         return extracted_watermarks

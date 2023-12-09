@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+
 class DCTText:
     @staticmethod
     def rgb_insert_texto(original_image, text, alpha):
@@ -14,7 +15,8 @@ class DCTText:
         original_image_float = original_image.astype(np.float32)
 
         # Divide a imagem em canais de cor
-        channel_blue, channel_green, channel_red = cv2.split(original_image_float)
+        channel_blue, channel_green, channel_red = cv2.split(
+            original_image_float)
 
         # Aplicando a DCT a cada canal de cor
         dct_blue = cv2.dct(channel_blue)
@@ -56,10 +58,12 @@ class DCTText:
         # Iterando sobre os coeficientes DCT que contêm o texto
         for i in range(min(text_length, blue_marked_dct.size)):
             # Subtrai a DCT da imagem original da DCT da imagem marcada
-            diff_coefficient = blue_marked_dct[i // blue_marked_dct.shape[1], i % blue_marked_dct.shape[1]] - blue_original_dct[i // blue_original_dct.shape[1], i % blue_original_dct.shape[1]]
+            diff_coefficient = blue_marked_dct[i // blue_marked_dct.shape[1], i % blue_marked_dct.shape[1]
+                                               ] - blue_original_dct[i // blue_original_dct.shape[1], i % blue_original_dct.shape[1]]
             extracted_text.append(diff_coefficient / alpha)
 
         # Converte os valores ASCII em uma string
-        extracted_text = ''.join([chr(int(round(value)) % 256) for value in extracted_text])
+        extracted_text = ''.join([chr(int(round(value)) % 256)
+                                 for value in extracted_text])
 
         return extracted_text
