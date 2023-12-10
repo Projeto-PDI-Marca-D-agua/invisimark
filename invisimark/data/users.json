@@ -1,0 +1,21 @@
+[
+  {
+    "id": "91d533a1-2c26-433c-b366-09a62232a822",
+    "name": "Cid Kagenou",
+    "email": "user1@example.com",
+    "password": "password1",
+    "images": [
+      "images/insertion/91d533a1-2c26-433c-b366-09a62232a822-91b70977-9261-42c7-bfa0-1d80bedd9902.png",
+      "images/insertion/91d533a1-2c26-433c-b366-09a62232a822-420af25c-4493-4ab8-ab2c-06d110afd116.png",
+      "91d533a1-2c26-433c-b366-09a62232a822-d83f0a20-7248-4e69-bcc9-254a40beedd0.png",
+      "91d533a1-2c26-433c-b366-09a62232a822-4124ae4b-4111-497d-a72d-f83080a28199.png"
+    ]
+  },
+  {
+    "id": "79b1e780-f193-4996-aa62-3717eaf9a354",
+    "name": "Arthur Leywin",
+    "email": "user2@example.com",
+    "password": "password2",
+    "images": []
+  }
+]

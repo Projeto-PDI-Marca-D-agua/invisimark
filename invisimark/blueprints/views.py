@@ -8,11 +8,7 @@ import os
 import cv2
 import numpy as np
 import uuid
-
-users = [
-    {"id": "91d533a1-2c26-433c-b366-09a62232a822", "name": "Cid Kagenou", "email": "user1@example.com", "password": "password1"},
-    {"id": "79b1e780-f193-4996-aa62-3717eaf9a354", "name": "Arthur Leywin", "email": "user2@example.com", "password": "password2"},
-]
+from invisimark.services.user_service import UserService, User
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
@@ -34,13 +30,7 @@ def init_app(app):
 
     @login_manager.user_loader
     def load_user(user_id):
-        for user_data in users:
-            if user_data['id'] == user_id:
-                u = User()
-                u.id = user_data['id']
-                u.name = user_data['name']
-                return u
-        return None
+        return UserService.load_user(user_id)
 
     @app.route("/")
     def index():
@@ -52,13 +42,12 @@ def init_app(app):
             email = request.form['email']
             password = request.form['password']
 
-            for user in users:
-                if user['email'] == email and user['password'] == password:
-                    u = User()
-                    u.id = user['id']
-                    login_user(u)
-                    flash('Login bem-sucedido!', 'success')
-                    return redirect(url_for('dashboard'))
+            user = UserService.authenticate_user(email, password)
+
+            if user:
+                login_user(user)
+                flash('Login bem-sucedido!', 'success')
+                return redirect(url_for('dashboard'))
 
             flash('Credenciais inválidas')
 
@@ -68,13 +57,16 @@ def init_app(app):
     def register():
         if request.method == 'POST':
             email = request.form['email']
+            name = request.form['name']  # Added line to get the 'name' field
             password = request.form['password']
 
-            for user in users:
-                if user['email'] == email and user['password'] == password:
-                    return redirect(url_for('/'))
+            result = UserService.register(email, name, password)
 
-            return "Credenciais inválidas"
+            if result == "success":
+                flash('Registration successful!', 'success')
+                return redirect(url_for('login'))
+            else:
+                flash(result)
 
         return render_template('auth/register.html')
 
@@ -82,8 +74,15 @@ def init_app(app):
     @login_required
     def dashboard():
         user_images = current_user.images
+
         return render_template('dashboard/index.html', username=current_user.name, user_images=user_images)
 
+    @app.route('/images/insertion/<filename>')
+    @login_required
+    def get_image(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+    
     @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     @login_required
     def insertion():
@@ -118,7 +117,11 @@ def init_app(app):
                 if marked_image is not None:
                     cv2.imwrite(file_path, marked_image)
 
-                    current_user.images.append(file_path)
+                    relative_path = os.path.join(image_directory, user_filename)
+
+                    relative_path = relative_path.replace("\\", "/")
+
+                    UserService.add_image_to_user(current_user.id, user_filename)
 
                     return send_file(file_path, as_attachment=True)
 
@@ -153,23 +156,3 @@ def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None,
         return None
 
     return marked_image
-
-
-class User:
-    def __init__(self, user_id=None, email=None, password=None):
-        self.id = user_id
-        self.email = email
-        self.password = password
-        self.image = []
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return str(self.id)
