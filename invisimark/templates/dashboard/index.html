@@ -29,7 +29,7 @@
   {% for image_path in user_images %}
   <div>
     <img
-      class="h-auto max-w-full rounded-lg"
+      class="h-auto max-w-200 rounded-lg"
       src="{{ url_for('get_image', filename=image_path) }}"
       alt="Imagem do Usuário"
     />
