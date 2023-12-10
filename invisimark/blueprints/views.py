@@ -69,6 +69,13 @@ def init_app(app):
                 flash(result)
 
         return render_template('auth/register.html')
+    
+    @app.route('/logout')
+    @login_required
+    def logout():
+        logout_user()
+        flash('Logout bem-sucedido!', 'success')
+        return redirect(url_for('index'))
 
     @app.route('/dashboard')
     @login_required
