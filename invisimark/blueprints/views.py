@@ -74,8 +74,9 @@ def init_app(app):
     @login_required
     def dashboard():
         user_images = current_user.images
+        user_images_len = len(user_images)
 
-        return render_template('dashboard/index.html', username=current_user.name, user_images=user_images)
+        return render_template('dashboard/index.html', username=current_user.name, user_images=user_images, user_images_len=user_images_len)
 
     @app.route('/images/insertion/<filename>')
     @login_required

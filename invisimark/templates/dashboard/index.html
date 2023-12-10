@@ -1,29 +1,19 @@
 <!-- index.html -->
 {% extends "base_layout.html" %} {% block content %}
 
-<div class="text-2xl font-bold text-gray-900 dark:text-white py-5">
+<div class="text-2xl font-bold text-gray-900 dark:text-white py-10">
   Bem-vindo, {{ username }}
 </div>
-
-<div class="grid grid-cols-2 md:grid-cols-3 gap-5 py-10">
+<div class="grid grid-cols-2 md:grid-cols-2 gap-5 py-10">
   <div
     class="bg-white-800 p-5 rounded-lg flex flex-col items-center justify-center shadow dark:border"
   >
-    <h1 class="font-semibold text-xl dark:text-white">Marcas d'água disponíveis</h1>
-    <div
-      class="flex flex-row gap-5 w-full items-center justify-center px-10 pt-4"
+    <h1 class="font-semibold text-xl dark:text-white pb-4">
+      Imagens protegidas
+    </h1>
+    <span class="text-3xl font-bold dark:text-white"
+      >{{ user_images_len }}</span
     >
-      <span class="text-3xl font-bold dark:text-white">3</span>
-      <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 60%"></div>
-      </div>
-    </div>
-  </div>
-  <div
-    class="bg-white-800 p-5 rounded-lg flex flex-col items-center justify-center shadow dark:border"
-  >
-    <h1 class="font-semibold text-xl dark:text-white pb-4">Imagens protegidas</h1>
-    <span class="text-3xl font-bold dark:text-white">7</span>
   </div>
   <div
     class="bg-white-800 p-5 rounded-lg flex flex-col items-center justify-center shadow dark:border"
