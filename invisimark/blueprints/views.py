@@ -1,12 +1,37 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash, send_file, send_from_directory
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required
+from invisimark.services.dct_image import DCTImage
+from invisimark.services.dct_text import DCTText
+from invisimark.services.dwt_image import DWTImage
+from werkzeug.utils import secure_filename
+import os
+import cv2
+import numpy as np
+import uuid
+from invisimark.services.user_service import UserService, User
 
-users = [
-    {"email": "user1@example.com", "password": "password1"},
-    {"email": "user2@example.com", "password": "password2"},
-]
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+current_directory = os.path.dirname(os.path.abspath(__file__))
+project_directory = os.path.dirname(os.path.dirname(
+    current_directory))
+image_directory = 'images/insertion'
+
+UPLOAD_FOLDER = os.path.join(project_directory, image_directory)
 
 
 def init_app(app):
+    app.secret_key = 'super secret key'
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+    
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return UserService.load_user(user_id)
+
     @app.route("/")
     def index():
         return render_template("index.html")
@@ -17,11 +42,14 @@ def init_app(app):
             email = request.form['email']
             password = request.form['password']
 
-            for user in users:
-                if user['email'] == email and user['password'] == password:
-                    return redirect(url_for('dashboard'))
+            user = UserService.authenticate_user(email, password)
 
-            return "Credenciais inválidas"
+            if user:
+                login_user(user)
+                flash('Login bem-sucedido!', 'success')
+                return redirect(url_for('dashboard'))
+
+            flash('Credenciais inválidas')
 
         return render_template('auth/login.html')
 
@@ -29,24 +57,102 @@ def init_app(app):
     def register():
         if request.method == 'POST':
             email = request.form['email']
+            name = request.form['name']  # Added line to get the 'name' field
             password = request.form['password']
 
-            for user in users:
-                if user['email'] == email and user['password'] == password:
-                    return redirect(url_for('/'))
+            result = UserService.register(email, name, password)
 
-            return "Credenciais inválidas"
+            if result == "success":
+                flash('Registration successful!', 'success')
+                return redirect(url_for('login'))
+            else:
+                flash(result)
 
         return render_template('auth/register.html')
 
     @app.route('/dashboard')
+    @login_required
     def dashboard():
-        return render_template('dashboard/index.html')
+        user_images = current_user.images
 
-    @app.route('/dashboard/insertion')
+        return render_template('dashboard/index.html', username=current_user.name, user_images=user_images)
+
+    @app.route('/images/insertion/<filename>')
+    @login_required
+    def get_image(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+    
+    @app.route('/dashboard/insertion', methods=['GET', 'POST'])
+    @login_required
     def insertion():
+        if request.method == 'POST':
+            if 'image' not in request.files:
+                flash('Nenhum arquivo enviado')
+                return redirect(request.url)
+
+            file = request.files['image']
+            insertion_type = request.form['insertion_type']
+            watermark_file = request.files.get('watermark_file')
+            watermark_text = request.form.get('watermark_text')
+
+            if file.filename == '':
+                flash('Nenhum arquivo selecionado')
+                return redirect(request.url)
+
+            watermark_file = cv2.imdecode(np.fromstring(
+                watermark_file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
+
+            if file and allowed_file(file.filename):
+                user_filename = f"{current_user.id}-{str(uuid.uuid4())}.png"
+
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], user_filename)
+                file.save(file_path)
+
+                original_image = cv2.imread(file_path)
+
+                marked_image = perform_insertion(
+                    original_image, insertion_type, 0.1, watermark_file, watermark_text)
+
+                if marked_image is not None:
+                    cv2.imwrite(file_path, marked_image)
+
+                    relative_path = os.path.join(image_directory, user_filename)
+
+                    relative_path = relative_path.replace("\\", "/")
+
+                    UserService.add_image_to_user(current_user.id, user_filename)
+
+                    return send_file(file_path, as_attachment=True)
+
+            else:
+                flash('Extensão de arquivo inválida')
+
+            return redirect(url_for('dashboard'))
+
         return render_template('dashboard/insertion.html')
 
     @app.route('/dashboard/myprofile')
+    @login_required
     def myprofile():
         return render_template('dashboard/myprofile.html')
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None, text=None):
+    if insertion_type == 'image_dct':
+        marked_image = DCTImage.rgb_insert_dct_blocks(
+            original_image, watermark, alpha)
+    elif insertion_type == 'image_dwt':
+        marked_image = DWTImage.embed_watermark_HH_blocks(
+            original_image, watermark, alpha)
+    elif insertion_type == 'text_dct':
+        marked_image = DCTText.rgb_insert_texto(original_image, text, alpha)
+    else:
+        flash('Tipo de inserção não suportado')
+        return None
+
+    return marked_image
