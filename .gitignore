@@ -9,3 +9,6 @@ node_modules
 
 # Imagens
 images
+
+# Data
+invisimark/data/*
