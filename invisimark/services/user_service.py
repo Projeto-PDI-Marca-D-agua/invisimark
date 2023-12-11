@@ -1,12 +1,13 @@
 # user_service.py
 import json
-from flask_login import UserMixin, login_user
 import uuid
 import os
+from flask_login import UserMixin, login_user
+
 
 class UserService:
-    DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-    USERS_FILE_PATH = os.path.join(DATA_DIR, 'users.json')
+    REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    USERS_DATA = os.path.join(REPO_DIR, 'data/users.json')
 
     @staticmethod
     def load_user(user_id):
@@ -40,21 +41,22 @@ class UserService:
 
     @staticmethod
     def _load_users_from_file():
-        with open(UserService.USERS_FILE_PATH, 'r') as file:
+        with open(UserService.USERS_DATA, 'r') as file:
             users = json.load(file)
         return users
 
     @staticmethod
     def _save_users_to_file(users):
-        with open(UserService.USERS_FILE_PATH, 'w') as file:
+        with open(UserService.USERS_DATA, 'w') as file:
             json.dump(users, file, indent=2)
 
     @staticmethod
     def _create_user_instance(user_data):
-      user = User(user_data['id'], user_data['name'], user_data['email'], user_data['password'])
-      user.images = user_data['images']
-      return user
-    
+        user = User(user_data['id'], user_data['name'],
+                    user_data['email'], user_data['password'])
+        user.images = user_data['images']
+        return user
+
     @staticmethod
     def authenticate_user(email, password):
         users = UserService._load_users_from_file()
@@ -66,7 +68,7 @@ class UserService:
                 return user
 
         return None
-    
+
     @staticmethod
     def add_image_to_user(user_id, image_path):
         users = UserService._load_users_from_file()
