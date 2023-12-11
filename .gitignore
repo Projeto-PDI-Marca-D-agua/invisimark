@@ -12,3 +12,6 @@ images
 
 # Users data
 data
+
+# Tailwind CSS
+invisimark/static/css
