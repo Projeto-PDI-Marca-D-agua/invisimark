@@ -3,28 +3,24 @@ from flask_login import LoginManager, login_user, logout_user, current_user, log
 from invisimark.services.dct_image import DCTImage
 from invisimark.services.dct_text import DCTText
 from invisimark.services.dwt_image import DWTImage
-from werkzeug.utils import secure_filename
+from invisimark.services.user_service import UserService
 import os
 import cv2
 import numpy as np
 import uuid
-from invisimark.services.user_service import UserService, User
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-
-current_directory = os.path.dirname(os.path.abspath(__file__))
-project_directory = os.path.dirname(os.path.dirname(
-    current_directory))
-image_directory = 'images/insertion'
-
-UPLOAD_FOLDER = os.path.join(project_directory, image_directory)
+REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+USERS_IMAGES = os.path.join(REPO_DIR, 'images')
+MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
+WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 
 
 def init_app(app):
     app.secret_key = 'super secret key'
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['MARKED_IMAGES_PATH'] = MARKED_IMAGES_PATH
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-    
+
     login_manager = LoginManager()
     login_manager.init_app(app)
 
@@ -69,7 +65,7 @@ def init_app(app):
                 flash(result)
 
         return render_template('auth/register.html')
-    
+
     @app.route('/logout')
     @login_required
     def logout():
@@ -88,9 +84,8 @@ def init_app(app):
     @app.route('/images/insertion/<filename>')
     @login_required
     def get_image(filename):
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename)
 
-    
     @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     @login_required
     def insertion():
@@ -108,13 +103,15 @@ def init_app(app):
                 flash('Nenhum arquivo selecionado')
                 return redirect(request.url)
 
-            watermark_file = cv2.imdecode(np.fromstring(
-                watermark_file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
+            if watermark_file:
+                watermark_file = cv2.imdecode(np.fromstring(
+                    watermark_file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
 
             if file and allowed_file(file.filename):
                 user_filename = f"{current_user.id}-{str(uuid.uuid4())}.png"
 
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], user_filename)
+                file_path = os.path.join(
+                    app.config['MARKED_IMAGES_PATH'], user_filename)
                 file.save(file_path)
 
                 original_image = cv2.imread(file_path)
@@ -125,11 +122,8 @@ def init_app(app):
                 if marked_image is not None:
                     cv2.imwrite(file_path, marked_image)
 
-                    relative_path = os.path.join(image_directory, user_filename)
-
-                    relative_path = relative_path.replace("\\", "/")
-
-                    UserService.add_image_to_user(current_user.id, user_filename)
+                    UserService.add_image_to_user(
+                        current_user.id, user_filename)
 
                     return send_file(file_path, as_attachment=True)
 
