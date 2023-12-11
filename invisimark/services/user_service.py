@@ -24,7 +24,7 @@ class UserService:
 
         for user_data in users:
             if user_data['email'] == email:
-                return "Email already registered"
+                return "E-mail em uso"
 
         new_user = {
             "id": str(uuid.uuid4()),
@@ -37,7 +37,7 @@ class UserService:
         users.append(new_user)
         UserService._save_users_to_file(users)
 
-        return "success"
+        return "Sucesso"
 
     @staticmethod
     def _load_users_from_file():

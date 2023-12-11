@@ -12,6 +12,7 @@ import uuid
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 USERS_IMAGES = os.path.join(REPO_DIR, 'images')
+ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
 MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
 WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 
@@ -45,7 +46,7 @@ def init_app(app):
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('dashboard'))
 
-            flash('Credenciais inválidas')
+            flash('Credenciais inválidas.', 'danger')
 
         return render_template('auth/login.html')
 
@@ -53,16 +54,16 @@ def init_app(app):
     def register():
         if request.method == 'POST':
             email = request.form['email']
-            name = request.form['name']  # Added line to get the 'name' field
+            name = request.form['name']
             password = request.form['password']
 
             result = UserService.register(email, name, password)
 
-            if result == "success":
-                flash('Registration successful!', 'success')
+            if result == "Sucesso":
+                flash('Usuário cadastrado com sucesso!', 'success')
                 return redirect(url_for('login'))
-            else:
-                flash(result)
+            elif result == "E-mail em uso":
+                flash('Este e-mail já está em uso.', 'danger')
 
         return render_template('auth/register.html')
 
