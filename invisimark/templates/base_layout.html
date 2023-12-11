@@ -49,9 +49,9 @@
             <div
               class="block py-2 px-4 text-base font-medium text-center text-gray-700 bg-gray-50 dark:bg-gray-600 dark:text-gray-300"
             >
-              Marca d'água
+              Operações
             </div>
-            <div class="grid grid-cols-3 gap-4 p-4">
+            <div class="grid grid-cols-2 gap-4 p-4">
               <a
                 href="/dashboard/insertion"
                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 group"
@@ -88,25 +88,6 @@
                 </svg>
                 <div class="text-sm text-gray-900 dark:text-white">Extrair</div>
               </a>
-              <a
-                href="#"
-                class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 group"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="mx-auto mb-1 w-7 h-7 text-gray-400 group-hover:text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1 2H8l-1-2H5V5z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
-                <div class="text-sm text-gray-900 dark:text-white">Algo</div>
-              </a>
             </div>
           </div>
           <button
@@ -130,10 +111,10 @@
             <div class="py-3 px-4">
               <span
                 class="block text-sm font-semibold text-gray-900 dark:text-white"
-                >Neil Sims</span
+                >{{ username }}</span
               >
               <span class="block text-sm text-gray-900 truncate dark:text-white"
-                >name@flowbite.com</span
+                >{{ email }}</span
               >
             </div>
             <ul
@@ -171,7 +152,7 @@
                 <a
                   href="/logout"
                   class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                  >Sign out</a
+                  >Logout</a
                 >
               </li>
             </ul>
