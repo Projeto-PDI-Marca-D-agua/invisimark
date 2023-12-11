@@ -12,6 +12,7 @@ import uuid
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 USERS_IMAGES = os.path.join(REPO_DIR, 'images')
+ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
 MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
 WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 
@@ -45,7 +46,7 @@ def init_app(app):
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('dashboard'))
 
-            flash('Credenciais inválidas')
+            flash('Credenciais inválidas.')
 
         return render_template('auth/login.html')
 
