@@ -46,7 +46,7 @@ def init_app(app):
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('dashboard'))
 
-            flash('Credenciais inválidas.')
+            flash('Credenciais inválidas.', 'danger')
 
         return render_template('auth/login.html')
 
@@ -54,16 +54,16 @@ def init_app(app):
     def register():
         if request.method == 'POST':
             email = request.form['email']
-            name = request.form['name']  # Added line to get the 'name' field
+            name = request.form['name']
             password = request.form['password']
 
             result = UserService.register(email, name, password)
 
-            if result == "success":
-                flash('Registration successful!', 'success')
+            if result == "Sucesso":
+                flash('Usuário cadastrado com sucesso!', 'success')
                 return redirect(url_for('login'))
-            else:
-                flash(result)
+            elif result == "E-mail em uso":
+                flash('Este e-mail já está em uso.', 'danger')
 
         return render_template('auth/register.html')
 
