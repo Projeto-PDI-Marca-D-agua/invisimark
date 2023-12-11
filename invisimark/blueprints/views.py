@@ -80,7 +80,7 @@ def init_app(app):
         user_images = current_user.images
         user_images_len = len(user_images)
 
-        return render_template('dashboard/index.html', username=current_user.name, user_images=user_images, user_images_len=user_images_len)
+        return render_template('dashboard/index.html', username=current_user.name, email=current_user.email, user_images=user_images, user_images_len=user_images_len)
 
     @app.route('/images/insertion/<filename>')
     @login_required
@@ -133,12 +133,12 @@ def init_app(app):
 
             return redirect(url_for('dashboard'))
 
-        return render_template('dashboard/insertion.html')
+        return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email)
 
     @app.route('/dashboard/myprofile')
     @login_required
     def myprofile():
-        return render_template('dashboard/myprofile.html')
+        return render_template('dashboard/myprofile.html', username=current_user.name, email=current_user.email)
 
 
 def allowed_file(filename):
