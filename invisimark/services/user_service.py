@@ -56,7 +56,7 @@ class UserService:
         user = User(user_data['id'], user_data['name'],
                     user_data['email'], user_data['password'])
         user.images = user_data['images']
-        user.watermark = user_data['watermarks']
+        user.watermarks = user_data['watermarks']
         return user
 
     @staticmethod
@@ -82,14 +82,22 @@ class UserService:
                 return
 
     @staticmethod
-    def add_watermark_to_user(user_id, watermark_path):
+    def add_watermark_to_user(user_id, watermark_name, watermark_type, watermark_value):
         users = UserService._load_users_from_file()
 
         for user_data in users:
             if user_data['id'] == user_id:
-                user_data['watermark'].append(watermark_path)
-                UserService._save_users_to_file(users)
-                return
+                if len(user_data['watermarks']) < 5:
+                    watermark = {
+                        'name': watermark_name,
+                        'type': watermark_type,
+                        'value': watermark_value
+                    }
+                    user_data['watermarks'].append(watermark)
+                    UserService._save_users_to_file(users)
+                    return
+                else:
+                    raise ValueError('O usuário atingiu o limite máximo de 5 marcas d\'água')
 
 
 class User(UserMixin):

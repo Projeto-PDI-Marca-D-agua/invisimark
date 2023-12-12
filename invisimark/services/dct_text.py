@@ -4,65 +4,48 @@ import cv2
 
 class DCTText:
     @staticmethod
-    def rgb_insert_texto(original_image, text, alpha):
-        # Verificando as dimensões da imagem de marca d'água
+    def rgb_insert_text_dct(original_image, text):
+        alpha = 0.01
         height, width, _ = original_image.shape
 
-        # Transformando o texto em valores ASCII
         text_array = np.array([ord(char) for char in text])
 
-        # Convertendo a imagem para ponto flutuante
-        original_image_float = original_image.astype(np.float32)
+        blue_channel, green_channel, red_channel = cv2.split(original_image)
 
-        # Divide a imagem em canais de cor
-        channel_blue, channel_green, channel_red = cv2.split(
-            original_image_float)
+        blue_dct = cv2.dct(np.float32(blue_channel))
+        green_dct = cv2.dct(np.float32(green_channel))
+        red_dct = cv2.dct(np.float32(red_channel))
 
-        # Aplicando a DCT a cada canal de cor
-        dct_blue = cv2.dct(channel_blue)
-        dct_green = cv2.dct(channel_green)
-        dct_red = cv2.dct(channel_red)
+        for i in range(min(len(text_array), original_image.shape[0] * original_image.shape[1])):
+            blue_dct[i // original_image.shape[1], i %
+                     original_image.shape[1]] += alpha * text_array[i]
 
-        # Inserindo o texto até ele acabar ou até a imagem acabar
-        for i in range(min(len(text_array), original_image.size)):
-            dct_blue[i // width, i % width] += alpha * text_array[i]
+        blue_inverse = cv2.idct(blue_dct)
+        green_inverse = cv2.idct(green_dct)
+        red_inverse = cv2.idct(red_dct)
 
-        # Aplicando a IDCT para obter a imagem marcada
-        inverse_blue = cv2.idct(dct_blue)
-        inverse_green = cv2.idct(dct_green)
-        inverse_red = cv2.idct(dct_red)
-
-        # Combinando os canais para obter a imagem final
-        marked_image = cv2.merge((inverse_blue, inverse_green, inverse_red))
-
-        # Convertendo a imagem de volta para uint8, se necessário
-        marked_image = marked_image.astype(np.uint8)
+        marked_image = cv2.merge((blue_inverse, green_inverse, red_inverse))
 
         return marked_image
 
     @staticmethod
-    def rgb_extract_text(marked_image, original_image, alpha, text_length):
-        # Dividindo a imagem em canais de cor
-        channel_blue_marked, _, _ = cv2.split(marked_image)
-        channel_blue_original, _, _ = cv2.split(original_image)
+    def rgb_extract_text_dct(marked_image, original_image, text_length):
+        alpha = 0.01
+        blue_channel, green_channel, red_channel = cv2.split(marked_image)
+        original_blue_channel, original_green_channel, original_red_channel = cv2.split(
+            original_image)
 
-        # Calculando a DCT 2D da imagem marcada
-        blue_marked_dct = cv2.dct(np.float32(channel_blue_marked))
+        blue_marked_dct = cv2.dct(np.float32(blue_channel))
 
-        # Calculando a DCT 2D da imagem original
-        blue_original_dct = cv2.dct(np.float32(channel_blue_original))
+        blue_original_dct = cv2.dct(np.float32(original_blue_channel))
 
-        # Inicializando um array para armazenar os valores ASCII extraídos
         extracted_text = []
 
-        # Iterando sobre os coeficientes DCT que contêm o texto
         for i in range(min(text_length, blue_marked_dct.size)):
-            # Subtrai a DCT da imagem original da DCT da imagem marcada
             diff_coefficient = blue_marked_dct[i // blue_marked_dct.shape[1], i % blue_marked_dct.shape[1]
                                                ] - blue_original_dct[i // blue_original_dct.shape[1], i % blue_original_dct.shape[1]]
             extracted_text.append(diff_coefficient / alpha)
 
-        # Converte os valores ASCII em uma string
         extracted_text = ''.join([chr(int(round(value)) % 256)
                                  for value in extracted_text])
 

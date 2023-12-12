@@ -20,6 +20,8 @@ WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 def init_app(app):
     app.secret_key = 'super secret key'
     app.config['MARKED_IMAGES_PATH'] = MARKED_IMAGES_PATH
+    app.config['ORIGINAL_IMAGES_PATH'] = ORIGINAL_IMAGES_PATH
+    app.config['WATERMARKS_PATH'] = WATERMARKS_PATH
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
     login_manager = LoginManager()
@@ -89,26 +91,41 @@ def init_app(app):
     def get_image(filename):
         return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename)
 
+    @app.route('/images/watermark/<filename>')
+    @login_required
+    def get_watermark(filename):
+        return send_from_directory(app.config['WATERMARKS_PATH'], filename)
+
     @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     @login_required
     def insertion():
+        user_watermarks = current_user.watermarks
+
         if request.method == 'POST':
             if 'image' not in request.files:
-                flash('Nenhum arquivo enviado')
+                flash('Nenhum arquivo enviado.')
                 return redirect(request.url)
 
             file = request.files['image']
             insertion_type = request.form['insertion_type']
-            watermark_file = request.files.get('watermark_file')
-            watermark_text = request.form.get('watermark_text')
+            watermark_select = request.form['watermark_select']
+            watermark_file = None
+            watermark_text = None
+            watermark_type = None
 
-            if file.filename == '':
-                flash('Nenhum arquivo selecionado')
-                return redirect(request.url)
+            for watermark in user_watermarks:
+                if watermark['value'] == watermark_select:
+                    watermark_type = watermark['type']
+                    break
 
-            if watermark_file:
+            if watermark_type == 'image':
                 watermark_file = cv2.imdecode(np.fromstring(
-                    watermark_file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
+                    open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
+            elif watermark_type == 'text':
+                watermark_text = watermark_select
+            if file.filename == '':
+                flash('Nenhum arquivo selecionado.')
+                return redirect(request.url)
 
             if file and allowed_file(file.filename):
                 user_filename = f"{current_user.id}-{str(uuid.uuid4())}.png"
@@ -120,7 +137,7 @@ def init_app(app):
                 original_image = cv2.imread(file_path)
 
                 marked_image = perform_insertion(
-                    original_image, insertion_type, 0.1, watermark_file, watermark_text)
+                    original_image, insertion_type, watermark_file, watermark_text)
 
                 if marked_image is not None:
                     cv2.imwrite(file_path, marked_image)
@@ -131,33 +148,95 @@ def init_app(app):
                     return send_file(file_path, as_attachment=True)
 
             else:
-                flash('Extensão de arquivo inválida')
+                flash('Extensão de arquivo inválida.')
 
             return redirect(url_for('dashboard'))
 
-        return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email)
+        return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
+
+    @app.route('/dashboard/extraction', methods=['GET', 'POST'])
+    @login_required
+    def extraction():
+        return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email)
+
+    @app.route('/dashboard/addwatermark', methods=['GET', 'POST'])
+    @login_required
+    def addwatermark():
+        if request.method == 'POST':
+            watermark_name = request.form['watermark_name']
+            watermark_type = request.form['watermark_type']
+
+            if watermark_type == 'text':
+                watermark_value = request.form['watermark_text']
+            elif watermark_type == 'image':
+                if 'watermark_file' not in request.files:
+                    flash('Nenhum arquivo enviado')
+                    return redirect(request.url)
+
+                watermark_file = request.files['watermark_file']
+
+                if watermark_file.filename == '':
+                    flash('Nenhum arquivo selecionado')
+                    return redirect(request.url)
+
+                filesave = save_watermark_file(watermark_file)
+                watermark_value = os.path.basename(filesave)
+            else:
+                flash('Tipo de marca d\'água inválido')
+                return redirect(request.url)
+
+            try:
+                UserService.add_watermark_to_user(
+                    current_user.id, watermark_name, watermark_type, watermark_value)
+                flash('Marca d\'água adicionada com sucesso!', 'success')
+                return redirect(url_for('dashboard'))
+            except ValueError as e:
+                flash(str(e), 'danger')
+
+        return render_template('dashboard/addwatermark.html', username=current_user.name, email=current_user.email)
+
+    @app.route('/dashboard/mywatermarks')
+    @login_required
+    def watermarks():
+        user_watermarks = current_user.watermarks
+        return render_template('dashboard/mywatermarks.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
 
     @app.route('/dashboard/myprofile')
     @login_required
     def myprofile():
         return render_template('dashboard/myprofile.html', username=current_user.name, email=current_user.email)
 
+    @app.route('/dashboard/myimages')
+    @login_required
+    def myimages():
+        return render_template('dashboard/myimages.html', username=current_user.name, email=current_user.email)
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None, text=None):
+def perform_insertion(original_image, insertion_type, watermark=None, text=None):
     if insertion_type == 'image_dct':
-        marked_image = DCTImage.rgb_insert_dct_blocks(
-            original_image, watermark, alpha)
+        marked_image = DCTImage.rgb_insert_dct(
+            original_image, watermark)
+    elif insertion_type == 'text_dct':
+        marked_image = DCTText.rgb_insert_text_dct(original_image, text)
     elif insertion_type == 'image_dwt':
         marked_image = DWTImage.embed_watermark_HH_blocks(
-            original_image, watermark, alpha)
-    elif insertion_type == 'text_dct':
-        marked_image = DCTText.rgb_insert_texto(original_image, text, alpha)
+            original_image, watermark)
+    elif insertion_type == 'text_dwt':
+        marked_image = DWTImage.embed_watermark_HH_blocks(
+            original_image, watermark)
     else:
-        flash('Tipo de inserção não suportado')
+        flash('Tipo de inserção não suportado.')
         return None
 
     return marked_image
+
+
+def save_watermark_file(file):
+    watermark_filename = os.path.join(
+        WATERMARKS_PATH, f"{str(uuid.uuid4())}.png")
+    file.save(watermark_filename)
+    return watermark_filename

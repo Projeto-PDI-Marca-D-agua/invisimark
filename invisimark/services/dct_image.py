@@ -4,82 +4,58 @@ import cv2
 
 class DCTImage:
     @staticmethod
-    def rgb_insert_dct_blocks(original_image, watermark, alpha):
-        # Dividindo a imagem em canais de cor
-        channel_blue, channel_green, channel_red = cv2.split(original_image)
+    def rgb_insert_dct(original_image, watermark):
+        alpha = 0.01
+        DCTImage.resize(original_image, watermark)
+        blue_channel, green_channel, red_channel = cv2.split(original_image)
 
-        block_size_x = original_image.shape[0] // 3
-        block_size_y = original_image.shape[1] // 3
-        watermark = cv2.resize(watermark, (block_size_y, block_size_x))
+        blue_dct = cv2.dct(np.float32(blue_channel))
+        green_dct = cv2.dct(np.float32(green_channel))
+        red_dct = cv2.dct(np.float32(red_channel))
 
-        # Aplicando DCT a cada canal de cor
-        dct_blue = cv2.dct(np.float32(channel_blue))
-        dct_green = cv2.dct(np.float32(channel_green))
-        dct_red = cv2.dct(np.float32(channel_red))
+        blue_watermark = alpha * watermark[:, :, 0]
+        green_watermark = alpha * watermark[:, :, 1]
+        red_watermark = alpha * watermark[:, :, 2]
 
-        # Ajustando a marca d'água para os canais de cor
-        watermark_blue = alpha * watermark[:, :, 0]
-        watermark_green = alpha * watermark[:, :, 1]
-        watermark_red = alpha * watermark[:, :, 2]
+        blue_dct += blue_watermark
+        green_dct += green_watermark
+        red_dct += red_watermark
 
-        # Inserindo a marca d'água em cada bloco diretamente na DCT
-        for i in range(3):
-            for j in range(3):
-                x_start, x_end = i * block_size_x, (i + 1) * block_size_x
-                y_start, y_end = j * block_size_y, (j + 1) * block_size_y
+        blue_inverse = cv2.idct(blue_dct)
+        green_inverse = cv2.idct(green_dct)
+        red_inverse = cv2.idct(red_dct)
 
-                dct_blue[x_start:x_end, y_start:y_end] += watermark_blue
-                dct_green[x_start:x_end, y_start:y_end] += watermark_green
-                dct_red[x_start:x_end, y_start:y_end] += watermark_red
-
-        # Aplicando IDCT para obter a imagem marcada
-        inverse_blue = cv2.idct(dct_blue)
-        inverse_green = cv2.idct(dct_green)
-        inverse_red = cv2.idct(dct_red)
-
-        # Combinando os canais para obter a imagem final
-        marked_image = cv2.merge((inverse_blue, inverse_green, inverse_red))
+        marked_image = cv2.merge((blue_inverse, green_inverse, red_inverse))
 
         return marked_image
 
     @staticmethod
-    def rgb_remove_dct_blocks(marked_image, original_image, alpha):
-        height_reference, width_reference, _ = marked_image.shape
+    def rgb_remove_dct(marked_image, original_image):
+        alpha = 0.01
 
-        original_image = cv2.resize(
-            original_image, (width_reference, height_reference))
-
-        channel_blue_marked, channel_green_marked, channel_red_marked = cv2.split(
+        blue_channel_M, green_channel_M, red_channel_M = cv2.split(
             marked_image)
 
-        channel_blue_marked = cv2.dct(np.float32(channel_blue_marked))
-        channel_green_marked = cv2.dct(np.float32(channel_green_marked))
-        channel_red_marked = cv2.dct(np.float32(channel_red_marked))
+        blue_channel_M = cv2.dct(np.float32(blue_channel_M))
+        green_channel_M = cv2.dct(np.float32(green_channel_M))
+        red_channel_M = cv2.dct(np.float32(red_channel_M))
 
-        channel_blue_original, channel_green_original, channel_red_original = cv2.split(
+        blue_channel_O, green_channel_O, red_channel_O = cv2.split(
             original_image)
 
-        channel_blue_original = cv2.dct(np.float32(channel_blue_original))
-        channel_green_original = cv2.dct(np.float32(channel_green_original))
-        channel_red_original = cv2.dct(np.float32(channel_red_original))
+        blue_channel_O = cv2.dct(np.float32(blue_channel_O))
+        green_channel_O = cv2.dct(np.float32(green_channel_O))
+        red_channel_O = cv2.dct(np.float32(red_channel_O))
 
-        watermark_blue = (channel_blue_marked - channel_blue_original) / alpha
-        watermark_green = (channel_green_marked -
-                           channel_green_original) / alpha
-        watermark_red = (channel_red_marked - channel_red_original) / alpha
+        blue_channel_watermark = (blue_channel_M - blue_channel_O) / alpha
+        green_channel_watermark = (green_channel_M - green_channel_O) / alpha
+        red_channel_watermark = (red_channel_M - red_channel_O) / alpha
 
-        watermark_extracted = cv2.merge(
-            (watermark_blue, watermark_green, watermark_red))
+        extracted_watermark = cv2.merge(
+            (blue_channel_watermark, green_channel_watermark, red_channel_watermark))
 
-        block_size_x = watermark_extracted.shape[0] // 3
-        block_size_y = watermark_extracted.shape[1] // 3
+        return extracted_watermark
 
-        extracted_watermarks = []
-
-        for i in range(3):
-            for j in range(3):
-                block = watermark_extracted[i * block_size_x: (i + 1) * block_size_x,
-                                            j * block_size_y: (j + 1) * block_size_y]
-                extracted_watermarks.append(block)
-
-        return extracted_watermarks
+    @staticmethod
+    def resize(original_image, watermark):
+        return cv2.resize(watermark, (original_image.shape[1], original_image.shape[0]))

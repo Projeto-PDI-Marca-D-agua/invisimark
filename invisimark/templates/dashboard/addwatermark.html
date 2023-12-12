@@ -1,0 +1,66 @@
+{% extends "base_layout.html" %} {% block content %}
+<h2>Adicionar Marca d'Água</h2>
+<form
+  method="POST"
+  enctype="multipart/form-data"
+  action="{{ url_for('addwatermark') }}"
+>
+  <div class="form-group">
+    <label for="watermark_name">Nome da Marca d'Água:</label>
+    <input
+      type="text"
+      class="form-control"
+      id="watermark_name"
+      name="watermark_name"
+      required
+    />
+  </div>
+  <div class="form-group">
+    <label for="watermark_type">Tipo de Marca d'Água:</label>
+    <select
+      class="form-control"
+      id="watermark_type"
+      name="watermark_type"
+      required
+    >
+      <option value="text">Texto</option>
+      <option value="image">Imagem</option>
+    </select>
+  </div>
+  <div class="form-group" id="text_watermark">
+    <label for="watermark_text">Texto da Marca d'Água:</label>
+    <input
+      type="text"
+      class="form-control"
+      id="watermark_text"
+      name="watermark_text"
+    />
+  </div>
+  <div class="form-group" id="image_watermark">
+    <label for="watermark_file">Arquivo da Marca d'Água:</label>
+    <input
+      type="file"
+      class="form-control-file"
+      id="watermark_file"
+      name="watermark_file"
+    />
+  </div>
+  <button type="submit" class="btn btn-primary">Adicionar Marca d'Água</button>
+</form>
+<script>
+  document
+    .getElementById("watermark_type")
+    .addEventListener("change", function () {
+      var textWatermark = document.getElementById("text_watermark");
+      var imageWatermark = document.getElementById("image_watermark");
+
+      if (this.value === "text") {
+        textWatermark.style.display = "block";
+        imageWatermark.style.display = "none";
+      } else if (this.value === "image") {
+        textWatermark.style.display = "none";
+        imageWatermark.style.display = "block";
+      }
+    });
+</script>
+{% endblock %}
