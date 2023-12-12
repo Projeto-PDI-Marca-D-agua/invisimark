@@ -115,7 +115,10 @@ def init_app(app):
     @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     @login_required
     def insertion():
+        user_watermarks = current_user.watermarks
+        
         if request.method == 'POST':
+
             if 'image' not in request.files:
                 flash('Nenhum arquivo enviado')
                 return redirect(request.url)
@@ -158,7 +161,7 @@ def init_app(app):
 
             return redirect(url_for('dashboard'))
 
-        return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email)
+        return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
     
     @app.route('/dashboard/addwatermark', methods=['GET', 'POST'])
     @login_required

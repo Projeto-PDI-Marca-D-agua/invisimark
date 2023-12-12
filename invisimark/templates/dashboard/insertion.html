@@ -18,7 +18,7 @@
         </h3>
         <label
           for="image"
-          class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+          class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
         >
           <div class="flex flex-col items-center justify-center pt-5 pb-6">
             <svg
@@ -67,7 +67,31 @@
             <option value="text_dct">Text DCT</option>
           </select>
         </div>
-        <div id="watermarkInputsContainer"></div>
+
+        <div>
+          <label
+            for="watermark_select"
+            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >Selecione uma marca d'água existente</label
+          >
+          <select
+            id="watermark_select"
+            name="watermark_select"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          >
+            <option value="" disabled selected>
+              Selecione uma marca d'água
+            </option>
+            {% for watermark in user_watermarks %}
+            <option
+              value="{{ watermark.value }}"
+              class="{% if watermark.type == 'image' %}image-watermark{% else %}text-watermark{% endif %}"
+            >
+              {{ watermark.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
       <button
@@ -82,34 +106,35 @@
 
 <script>
   function toggleWatermarkInput(selectElement) {
-    const insertionType = selectElement.value;
-    const watermarkInputsContainer = document.getElementById(
-      "watermarkInputsContainer"
-    );
+    var watermarkSelect = document.getElementById("watermark_select");
+    var imageWatermarks = document.querySelectorAll(".image-watermark");
+    var textWatermarks = document.querySelectorAll(".text-watermark");
 
-    // Clear existing content in the container
-    watermarkInputsContainer.innerHTML = "";
-
-    if (insertionType === "image_dct" || insertionType === "image_dwt") {
-      // If 'Image' is selected, add a file input
-      const watermarkFileInput = document.createElement("input");
-      watermarkFileInput.type = "file";
-      watermarkFileInput.name = "watermark_file";
-      watermarkFileInput.className =
-        "border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500";
-      watermarkInputsContainer.appendChild(watermarkFileInput);
-    } else if (insertionType === "text_dct") {
-      // If 'Text' is selected, add a text input
-      const watermarkTextInput = document.createElement("input");
-      watermarkTextInput.type = "text";
-      watermarkTextInput.name = "watermark_text";
-      watermarkTextInput.className =
-        "border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500";
-      watermarkInputsContainer.appendChild(watermarkTextInput);
+    // Oculta todas as opções
+    for (var i = 0; i < imageWatermarks.length; i++) {
+      imageWatermarks[i].style.display = "none";
     }
 
-    // Show the container
-    watermarkInputsContainer.style.display = "block";
+    for (var i = 0; i < textWatermarks.length; i++) {
+      textWatermarks[i].style.display = "none";
+    }
+
+    // Exibe apenas as opções relevantes com base na seleção
+    if (
+      selectElement.value === "image_dct" ||
+      selectElement.value === "image_dwt"
+    ) {
+      for (var i = 0; i < imageWatermarks.length; i++) {
+        imageWatermarks[i].style.display = "block";
+      }
+    } else if (selectElement.value === "text_dct") {
+      for (var i = 0; i < textWatermarks.length; i++) {
+        textWatermarks[i].style.display = "block";
+      }
+    }
+
+    // Redefine o valor do segundo select
+    watermarkSelect.value = "";
   }
 </script>
 
