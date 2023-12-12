@@ -1,0 +1,21 @@
+{% extends "base_layout.html" %} {% block content %}
+<div class="flex flex-col py-10 items-center justify-center w-full">
+  <h2>Minhas Marcas d'Água</h2>
+  <ul>
+    {% for watermark in user_watermarks %}
+    <li>
+      <strong>{{ watermark.name }}</strong>
+      <br />
+      {% if watermark.type == "text" %} Tipo: Texto<br />
+      Valor: {{ watermark.value }} {% elif watermark.type == "image" %} Tipo:
+      Imagem<br />
+      <img
+        src="{{ url_for('get_watermark', filename=watermark.value) }}"
+        alt="{{ watermark.name }}"
+      />
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

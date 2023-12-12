@@ -8,18 +8,36 @@ import os
 import cv2
 import numpy as np
 import uuid
+from flask import render_template, request, redirect, url_for, flash, send_file, send_from_directory
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required
+from invisimark.services.dct_image import DCTImage
+from invisimark.services.dct_text import DCTText
+from invisimark.services.dwt_image import DWTImage
+from invisimark.services.user_service import UserService
+from werkzeug.utils import secure_filename
+import os
+import cv2
+import numpy as np
+import uuid
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 USERS_IMAGES = os.path.join(REPO_DIR, 'images')
 ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
 MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
-WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+USERS_IMAGES = os.path.join(REPO_DIR, 'images')
+ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
+MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
+WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermark')
 
 
 def init_app(app):
     app.secret_key = 'super secret key'
     app.config['MARKED_IMAGES_PATH'] = MARKED_IMAGES_PATH
+    app.config['ORIGINAL_IMAGES_PATH'] = ORIGINAL_IMAGES_PATH
+    app.config['WATERMARKS_PATH'] = WATERMARKS_PATH
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
     login_manager = LoginManager()
@@ -88,6 +106,11 @@ def init_app(app):
     @login_required
     def get_image(filename):
         return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename)
+    
+    @app.route('/images/watermark/<filename>')
+    @login_required
+    def get_watermark(filename):
+        return send_from_directory(app.config['WATERMARKS_PATH'], filename)
 
     @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     @login_required
@@ -136,7 +159,48 @@ def init_app(app):
             return redirect(url_for('dashboard'))
 
         return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email)
+    
+    @app.route('/dashboard/addwatermark', methods=['GET', 'POST'])
+    @login_required
+    def addwatermark():
+        if request.method == 'POST':
+            watermark_name = request.form['watermark_name']
+            watermark_type = request.form['watermark_type']
 
+            if watermark_type == 'text':
+                watermark_value = request.form['watermark_text']
+            elif watermark_type == 'image':
+                if 'watermark_file' not in request.files:
+                    flash('Nenhum arquivo enviado')
+                    return redirect(request.url)
+
+                watermark_file = request.files['watermark_file']
+
+                if watermark_file.filename == '':
+                    flash('Nenhum arquivo selecionado')
+                    return redirect(request.url)
+
+                watermark_value = save_watermark_file(watermark_file)
+            else:
+                flash('Tipo de marca d\'água inválido')
+                return redirect(request.url)
+
+            try:
+                UserService.add_watermark_to_user(
+                    current_user.id, watermark_name, watermark_type, watermark_value)
+                flash('Marca d\'água adicionada com sucesso!', 'success')
+                return redirect(url_for('dashboard'))
+            except ValueError as e:
+                flash(str(e), 'danger')
+
+        return render_template('dashboard/addwatermark.html', username=current_user.name, email=current_user.email)
+
+    @app.route('/dashboard/watermarks')
+    @login_required
+    def watermarks():
+        user_watermarks = current_user.watermarks
+        return render_template('dashboard/watermark.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
+    
     @app.route('/dashboard/myprofile')
     @login_required
     def myprofile():
@@ -161,3 +225,8 @@ def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None,
         return None
 
     return marked_image
+
+def save_watermark_file(file):
+    watermark_filename = f"{str(uuid.uuid4())}.png"
+    file.save(watermark_filename)
+    return watermark_filename
