@@ -249,7 +249,10 @@ def init_app(app):
     @app.route('/dashboard/myimages')
     @login_required
     def myimages():
-        return render_template('dashboard/myimages.html', username=current_user.name, email=current_user.email)
+        user_images = current_user.images
+
+        return render_template('dashboard/myimages.html', username=current_user.name, email=current_user.email, user_images=user_images)
+
 
 
 def allowed_file(filename):

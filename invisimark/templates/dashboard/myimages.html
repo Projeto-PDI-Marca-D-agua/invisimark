@@ -1,1 +1,23 @@
-{% extends "base_layout.html" %} {% block content %} {% endblock %}
+{% extends "base_layout.html" %} {% block content %}
+<div class="space-y-4 pt-10">
+  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+    Minhas imagens
+  </div>
+  <div
+    class="bg-gray-50 p-8 rounded-lg w-3/4 mx-auto dark:bg-gray-800 dark:border dark:border-gray-700"
+  >
+    <div class="columns-2 md:columns-3 lg:columns-4">
+      {% for image_path in user_images %}
+      <div
+        class="relative mb-4 before:content-[''] before:rounded-md before:absolute before:inset-0 before:bg-black before:bg-opacity-20"
+      >
+        <img
+          class="w-full rounded-md"
+          src="{{ url_for('get_image', filename=image_path) }}"
+        />
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
