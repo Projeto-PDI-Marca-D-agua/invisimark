@@ -6,7 +6,7 @@ class DCTImage:
     @staticmethod
     def rgb_insert_dct(original_image, watermark):
         alpha = 0.01
-        DCTImage.resize(original_image, watermark)
+        watermark = DCTImage.resize(original_image, watermark)
         blue_channel, green_channel, red_channel = cv2.split(original_image)
 
         blue_dct = cv2.dct(np.float32(blue_channel))

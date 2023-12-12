@@ -121,8 +121,8 @@ def init_app(app):
                     break
 
             if watermark_type == 'image':
-                watermark_file = cv2.imdecode(np.fromstring(
-                    open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
+                watermark_file = convertNpArray(
+                    watermark_select, app.config['WATERMARKS_PATH'])
             elif watermark_type == 'text':
                 watermark_text = watermark_select
 
@@ -254,9 +254,15 @@ def init_app(app):
         return render_template('dashboard/myimages.html', username=current_user.name, email=current_user.email, user_images=user_images)
 
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def convertNpArray(input, path_config):
+    file = cv2.imdecode(np.fromstring(
+        open(os.path.join(path_config, input), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
+
+    return file
 
 
 def perform_insertion(original_image, insertion_type, watermark=None, text=None):
