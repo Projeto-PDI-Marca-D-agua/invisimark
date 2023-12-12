@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, current_user, log
 from invisimark.services.dct_image import DCTImage
 from invisimark.services.dct_text import DCTText
 from invisimark.services.dwt_image import DWTImage
+from invisimark.services.dwt_text import DWTText
 from invisimark.services.user_service import UserService
 import os
 import cv2
@@ -146,7 +147,6 @@ def init_app(app):
                         current_user.id, user_filename)
 
                     return send_file(file_path, as_attachment=True)
-
             else:
                 flash('Extensão de arquivo inválida.')
 
@@ -157,7 +157,39 @@ def init_app(app):
     @app.route('/dashboard/extraction', methods=['GET', 'POST'])
     @login_required
     def extraction():
-        return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email)
+        user_watermarks = current_user.watermarks
+
+        if request.method == 'POST':
+            if 'image' not in request.files:
+                flash('Nenhum arquivo enviado.')
+                return redirect(request.url)
+
+            file = request.files['image']
+            extraction_type = request.form['extraction_type']
+            watermark_select = request.form['watermark_select']
+            watermark_file = None
+            watermark_text = None
+            watermark_type = None
+
+            for watermark in user_watermarks:
+                if watermark['value'] == watermark_select:
+                    watermark_type = watermark['type']
+                    break
+
+            if watermark_type == 'image':
+                watermark_file = cv2.imdecode(np.fromstring(
+                    open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
+            elif watermark_type == 'text':
+                watermark_text = watermark_select
+            if file.filename == '':
+                flash('Nenhum arquivo selecionado.')
+                return redirect(request.url)
+
+            if file and allowed_file(file.filename):
+                watermark = perform_extraction(
+                    original_image, extraction_type, watermark_file, watermark_text)
+
+        return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
 
     @app.route('/dashboard/addwatermark', methods=['GET', 'POST'])
     @login_required
@@ -226,13 +258,31 @@ def perform_insertion(original_image, insertion_type, watermark=None, text=None)
         marked_image = DWTImage.embed_watermark_HH_blocks(
             original_image, watermark)
     elif insertion_type == 'text_dwt':
-        marked_image = DWTImage.embed_watermark_HH_blocks(
-            original_image, watermark)
+        marked_image = DWTText.embed_text_watermark(original_image, text)
     else:
         flash('Tipo de inserção não suportado.')
         return None
 
     return marked_image
+
+
+def perform_extraction(original_image, marked_image, extraction_type, watermark=None, text=None):
+    if extraction_type == 'image_dct':
+        watermark = DCTImage.rgb_remove_dct(original_image, marked_image)
+    elif extraction_type == 'text_dct':
+        watermark = DCTText.rgb_extract_text_dct(
+            original_image, marked_image, len(text))
+    elif extraction_type == 'image_dwt':
+        watermark = DWTImage.extract_watermark_HH_blocks(
+            original_image, marked_image)
+    elif extraction_type == 'text_dwt':
+        watermark = DWTText.extract_text_watermark(
+            original_image, marked_image, len(text))
+    else:
+        flash('Tipo de extração não suportado.')
+        return None
+
+    return watermark
 
 
 def save_watermark_file(file):

@@ -5,9 +5,9 @@ import numpy as np
 
 class DWTText:
     @staticmethod
-    def embed_text_watermark(image, text):
+    def embed_text_watermark(original_image, text):
         alpha = 0.1
-        b, g, r = cv2.split(image)
+        b, g, r = cv2.split(original_image)
 
         coeffs_b = pywt.dwt2(b, 'haar')
         coeffs_g = pywt.dwt2(g, 'haar')
@@ -36,12 +36,13 @@ class DWTText:
         watermarked_image = cv2.merge(
             (watermarked_b, watermarked_g, watermarked_r))
 
-        return watermarked_image, original_text_length
+        # return original_text_length
+        return watermarked_image
 
     @staticmethod
-    def extract_text_watermark(image, original_image, original_text_length):
+    def extract_text_watermark(original_image, marked_image, original_text_length):
         alpha = 0.1
-        b, g, r = cv2.split(image)
+        b, g, r = cv2.split(marked_image)
         b_original, g_original, r_original = cv2.split(original_image)
 
         coeffs_original_b = pywt.dwt2(b_original, 'haar')

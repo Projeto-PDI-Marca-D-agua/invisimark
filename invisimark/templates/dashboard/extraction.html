@@ -14,13 +14,17 @@
     >
       <div class="flex flex-col items-center justify-center w-full">
         <h3 class="text-xl font-semibold pb-2 dark:text-white">
-          Selecione sua imagem
+          Selecione uma imagem
         </h3>
         <label
           for="image"
           class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+          id="imageLabel"
         >
-          <div class="flex flex-col items-center justify-center pt-5 pb-6">
+          <div
+            class="flex flex-col items-center justify-center pt-5 pb-6"
+            id="svgContainer"
+          >
             <svg
               class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
               aria-hidden="true"
@@ -44,39 +48,150 @@
               SVG, PNG, JPG or GIF (MAX. 800x400px)
             </p>
           </div>
-          <input id="image" name="image" type="file" class="hidden" />
+          <input
+            id="image"
+            name="image"
+            type="file"
+            class="hidden"
+            onchange="handleImageSelection()"
+          />
+          <div
+            id="imageSelectedMsg"
+            class="text-sm text-green-500 dark:text-green-400 hidden"
+          >
+            Image selected
+          </div>
+          <img
+            id="selectedImagePreview"
+            class="mt-2 max-h-96 w-auto hidden"
+            alt="Selected Image Preview"
+          />
         </label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 pb-5">
         <div>
           <label
-            for="insertion_type"
+            for="extraction_type"
             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >Insertion Type</label
+            >Tipo de extração</label
           >
           <select
-            id="insertion_type"
-            name="insertion_type"
+            id="extraction_type"
+            name="extraction_type"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             onchange="toggleWatermarkInput(this)"
             required
           >
             <option value="" disabled selected>Selecione uma opção</option>
-            <option value="image_dct">Image DCT</option>
-            <option value="image_dwt">Image DWT</option>
-            <option value="text_dct">Text DCT</option>
+            <option value="image_dct">DCT (Imagem)</option>
+            <option value="text_dct">DCT (Texto)</option>
+            <option value="image_dwt">DWT (Imagem)</option>
+            <option value="text_dwt">DWT (Texto)</option>
           </select>
         </div>
-        <div id="watermarkInputsContainer"></div>
+        <div>
+          <label
+            for="watermark_select"
+            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >Selecione uma marca d'água</label
+          >
+          <select
+            id="watermark_select"
+            name="watermark_select"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          >
+            <option value="" disabled selected>Selecione uma opção</option>
+            {% for watermark in user_watermarks %}
+            <option
+              value="{{ watermark.value }}"
+              class="{% if watermark.type == 'image' %}image-watermark{% else %}text-watermark{% endif %}"
+            >
+              {{ watermark.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-
       <button
         type="submit"
         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-0.1 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
       >
-        Insert
+        Extrair
       </button>
     </form>
   </div>
 </div>
+<script>
+  function toggleWatermarkInput(selectElement) {
+    var watermarkSelect = document.getElementById("watermark_select");
+    var imageWatermarks = document.querySelectorAll(".image-watermark");
+    var textWatermarks = document.querySelectorAll(".text-watermark");
+
+    for (var i = 0; i < imageWatermarks.length; i++) {
+      imageWatermarks[i].style.display = "none";
+    }
+
+    for (var i = 0; i < textWatermarks.length; i++) {
+      textWatermarks[i].style.display = "none";
+    }
+
+    if (selectElement.value.startsWith("image")) {
+      for (var i = 0; i < imageWatermarks.length; i++) {
+        imageWatermarks[i].style.display = "block";
+      }
+    } else if (selectElement.value.startsWith("text")) {
+      for (var i = 0; i < textWatermarks.length; i++) {
+        textWatermarks[i].style.display = "block";
+      }
+    }
+
+    watermarkSelect.value = "";
+  }
+
+  function handleImageSelection() {
+    const svgContainer = document.getElementById("svgContainer");
+    const selectedImagePreview = document.getElementById(
+      "selectedImagePreview"
+    );
+    const imageSelectedMsg = document.getElementById("imageSelectedMsg");
+    const imageInput = document.getElementById("image");
+    const imageLabel = document.getElementById("imageLabel");
+
+    if (imageInput.files && imageInput.files[0]) {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        svgContainer.style.display = "none";
+
+        selectedImagePreview.src = e.target.result;
+        selectedImagePreview.classList.remove("hidden");
+
+        imageSelectedMsg.style.display = "none";
+
+        imageLabel.classList.remove(
+          "flex",
+          "flex-col",
+          "items-center",
+          "justify-center",
+          "w-full",
+          "h-64",
+          "border-2",
+          "border-gray-300",
+          "border-dashed",
+          "rounded-lg",
+          "cursor-pointer",
+          "bg-gray-50",
+          "dark:hover:bg-bray-800",
+          "dark:bg-gray-700",
+          "hover:bg-gray-100",
+          "dark:border-gray-600",
+          "dark:hover:border-gray-500",
+          "dark:hover:bg-gray-600"
+        );
+      };
+
+      reader.readAsDataURL(imageInput.files[0]);
+    }
+  }
+</script>
 {% endblock %}
