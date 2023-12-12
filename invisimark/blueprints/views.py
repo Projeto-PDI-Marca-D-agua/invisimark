@@ -9,7 +9,6 @@ import cv2
 import numpy as np
 import uuid
 
-
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 USERS_IMAGES = os.path.join(REPO_DIR, 'images')
