@@ -51,40 +51,48 @@ messages[0][0] == 'success' %}
   </button>
 </div>
 {% endif %} {% endif %} {% endwith %}
-<div class="text-2xl font-bold text-gray-900 dark:text-white py-10">
-  Bem-vindo, {{ username }}
-</div>
-<div class="grid grid-cols-2 md:grid-cols-2 gap-5 py-10">
-  <div
-    class="bg-white-800 p-5 rounded-lg flex flex-col items-center justify-center shadow dark:border"
-  >
-    <h1 class="font-semibold text-xl dark:text-white pb-4">
-      Imagens protegidas
-    </h1>
-    <span class="text-3xl font-bold dark:text-white"
-      >{{ user_images_len }}</span
+<div class="space-y-4">
+  <div class="text-2xl font-bold text-gray-900 dark:text-white pt-10">
+    Bem-vindo, {{ username }}
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-2 gap-5">
+    <div
+      class="bg-gray-50 p-5 rounded-lg dark:bg-gray-800 flex flex-col items-center justify-center shadow dark:border dark:border-gray-700"
     >
+      <h1 class="font-semibold text-xl dark:text-white pb-4">
+        Imagens protegidas
+      </h1>
+      <span class="text-3xl font-bold dark:text-white"
+        >{{ user_images_len }}</span
+      >
+    </div>
+    <div
+      class="bg-gray-50 p-5 rounded-lg dark:bg-gray-800 flex flex-col items-center justify-center shadow dark:border dark:border-gray-700"
+    >
+      <h1 class="font-semibold text-xl dark:text-white pb-4">Marcas d'água</h1>
+      <span class="text-3xl font-bold dark:text-white"
+        >{{ user_watermarks_len }}</span
+      >
+    </div>
+  </div>
+  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+    Imagens salvas
   </div>
   <div
-    class="bg-white-800 p-5 rounded-lg flex flex-col items-center justify-center shadow dark:border"
+    class="bg-gray-50 p-8 rounded-lg dark:bg-gray-800 dark:border dark:border-gray-700"
   >
-    <h1 class="font-semibold text-xl dark:text-white">Extrações realizadas</h1>
+    <div class="columns-2 md:columns-3 lg:columns-4">
+      {% for image_path in user_images %}
+      <div
+        class="relative mb-4 before:content-[''] before:rounded-md before:absolute before:inset-0 before:bg-black before:bg-opacity-20"
+      >
+        <img
+          class="w-full rounded-md"
+          src="{{ url_for('get_image', filename=image_path) }}"
+        />
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
-
-<div class="text-2xl font-bold text-gray-900 dark:text-white py-5">
-  Imagens salvas
-</div>
-<div class="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4">
-  {% for image_path in user_images %}
-  <div>
-    <img
-      class="h-auto max-w-200 rounded-lg"
-      src="{{ url_for('get_image', filename=image_path) }}"
-      alt="Imagem do Usuário"
-    />
-  </div>
-  {% endfor %}
-</div>
-
 {% endblock %}
