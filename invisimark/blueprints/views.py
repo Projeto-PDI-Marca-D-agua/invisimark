@@ -102,9 +102,8 @@ def init_app(app):
         user_watermarks = current_user.watermarks
 
         if request.method == 'POST':
-
             if 'image' not in request.files:
-                flash('Nenhum arquivo enviado')
+                flash('Nenhum arquivo enviado.')
                 return redirect(request.url)
 
             file = request.files['image']
@@ -112,8 +111,8 @@ def init_app(app):
             watermark_select = request.form['watermark_select']
             watermark_file = None
             watermark_text = None
-
             watermark_type = None
+
             for watermark in user_watermarks:
                 if watermark['value'] == watermark_select:
                     watermark_type = watermark['type']
@@ -125,7 +124,7 @@ def init_app(app):
             elif watermark_type == 'text':
                 watermark_text = watermark_select
             if file.filename == '':
-                flash('Nenhum arquivo selecionado')
+                flash('Nenhum arquivo selecionado.')
                 return redirect(request.url)
 
             if file and allowed_file(file.filename):
@@ -149,7 +148,7 @@ def init_app(app):
                     return send_file(file_path, as_attachment=True)
 
             else:
-                flash('Extensão de arquivo inválida')
+                flash('Extensão de arquivo inválida.')
 
             return redirect(url_for('dashboard'))
 
