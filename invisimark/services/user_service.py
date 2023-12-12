@@ -31,7 +31,8 @@ class UserService:
             "name": name,
             "email": email,
             "password": password,
-            "images": []
+            "images": [],
+            "watermark": []
         }
 
         users.append(new_user)
@@ -55,6 +56,7 @@ class UserService:
         user = User(user_data['id'], user_data['name'],
                     user_data['email'], user_data['password'])
         user.images = user_data['images']
+        user.watermark = user_data['watermarks']
         return user
 
     @staticmethod
@@ -79,6 +81,16 @@ class UserService:
                 UserService._save_users_to_file(users)
                 return
 
+    @staticmethod
+    def add_watermark_to_user(user_id, watermark_path):
+        users = UserService._load_users_from_file()
+
+        for user_data in users:
+            if user_data['id'] == user_id:
+                user_data['watermark'].append(watermark_path)
+                UserService._save_users_to_file(users)
+                return
+
 
 class User(UserMixin):
     def __init__(self, user_id=None, name=None, email=None, password=None):
@@ -87,6 +99,7 @@ class User(UserMixin):
         self.email = email
         self.password = password
         self.images = []
+        self.watermarks = []
 
     def is_authenticated(self):
         return True
