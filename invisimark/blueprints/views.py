@@ -110,6 +110,7 @@ def init_app(app):
             file = request.files['image']
             insertion_type = request.form['insertion_type']
             watermark_select = request.form['watermark_select']
+
             watermark_file = None
             watermark_text = None
             watermark_type = None
@@ -124,6 +125,7 @@ def init_app(app):
                     open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
             elif watermark_type == 'text':
                 watermark_text = watermark_select
+
             if file.filename == '':
                 flash('Nenhum arquivo selecionado.')
                 return redirect(request.url)
@@ -160,13 +162,15 @@ def init_app(app):
         user_watermarks = current_user.watermarks
 
         if request.method == 'POST':
-            if 'image' not in request.files:
+            if 'markedImage' not in request.files or "originalImage" not in request.files:
                 flash('Nenhum arquivo enviado.')
                 return redirect(request.url)
 
-            file = request.files['image']
+            marked_image = request.files['markedImage']
+            original_image = request.files['originalImage']
             extraction_type = request.form['extraction_type']
             watermark_select = request.form['watermark_select']
+
             watermark_file = None
             watermark_text = None
             watermark_type = None
@@ -181,13 +185,17 @@ def init_app(app):
                     open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
             elif watermark_type == 'text':
                 watermark_text = watermark_select
-            if file.filename == '':
-                flash('Nenhum arquivo selecionado.')
+
+            if marked_image.filename == '':
+                flash('Nenhum imagem marcada selecionada.')
+                return redirect(request.url)
+            elif original_image.filename == '':
+                flash('Nenhum imagem original selecionada.')
                 return redirect(request.url)
 
-            if file and allowed_file(file.filename):
+            if marked_image and original_image and allowed_file(marked_image.filename) and allowed_file(original_image.filename):
                 watermark = perform_extraction(
-                    original_image, extraction_type, watermark_file, watermark_text)
+                    original_image, marked_image, extraction_type, watermark_file, watermark_text)
 
         return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
 
