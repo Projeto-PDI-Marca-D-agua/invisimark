@@ -30,7 +30,7 @@ class DCTImage:
         return marked_image
 
     @staticmethod
-    def rgb_remove_dct(marked_image, original_image):
+    def rgb_remove_dct(original_image, marked_image):
         alpha = 0.01
 
         blue_channel_M, green_channel_M, red_channel_M = cv2.split(

@@ -29,7 +29,7 @@ class DCTText:
         return marked_image
 
     @staticmethod
-    def rgb_extract_text_dct(marked_image, original_image, text_length):
+    def rgb_extract_text_dct(original_image, marked_image, text_length):
         alpha = 0.01
         blue_channel, green_channel, red_channel = cv2.split(marked_image)
         original_blue_channel, original_green_channel, original_red_channel = cv2.split(
