@@ -25,12 +25,7 @@ REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 USERS_IMAGES = os.path.join(REPO_DIR, 'images')
 ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
 MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-USERS_IMAGES = os.path.join(REPO_DIR, 'images')
-ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
-MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
-WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermark')
+WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 
 
 def init_app(app):
@@ -106,7 +101,7 @@ def init_app(app):
     @login_required
     def get_image(filename):
         return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename)
-    
+
     @app.route('/images/watermark/<filename>')
     @login_required
     def get_watermark(filename):
@@ -154,7 +149,7 @@ def init_app(app):
                 original_image = cv2.imread(file_path)
 
                 marked_image = perform_insertion(
-                    original_image, insertion_type, 0.1, watermark_file, watermark_text)
+                    original_image, insertion_type, watermark_file, watermark_text)
 
                 if marked_image is not None:
                     cv2.imwrite(file_path, marked_image)
@@ -170,7 +165,12 @@ def init_app(app):
             return redirect(url_for('dashboard'))
 
         return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
-    
+
+    @app.route('/dashboard/extraction', methods=['GET', 'POST'])
+    @login_required
+    def extraction():
+        return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email)
+
     @app.route('/dashboard/addwatermark', methods=['GET', 'POST'])
     @login_required
     def addwatermark():
@@ -207,38 +207,48 @@ def init_app(app):
 
         return render_template('dashboard/addwatermark.html', username=current_user.name, email=current_user.email)
 
-    @app.route('/dashboard/watermarks')
+    @app.route('/dashboard/mywatermarks')
     @login_required
     def watermarks():
         user_watermarks = current_user.watermarks
-        return render_template('dashboard/watermark.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
-    
+        return render_template('dashboard/mywatermarks.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
+
     @app.route('/dashboard/myprofile')
     @login_required
     def myprofile():
         return render_template('dashboard/myprofile.html', username=current_user.name, email=current_user.email)
+
+    @app.route('/dashboard/myimages')
+    @login_required
+    def myimages():
+        return render_template('dashboard/myimages.html', username=current_user.name, email=current_user.email)
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None, text=None):
+def perform_insertion(original_image, insertion_type, watermark=None, text=None):
     if insertion_type == 'image_dct':
-        marked_image = DCTImage.rgb_insert_dct_blocks(
-            original_image, watermark, alpha)
+        marked_image = DCTImage.rgb_insert_dct(
+            original_image, watermark)
+    elif insertion_type == 'text_dct':
+        marked_image = DCTText.rgb_insert_text_dct(original_image, text)
     elif insertion_type == 'image_dwt':
         marked_image = DWTImage.embed_watermark_HH_blocks(
-            original_image, watermark, alpha)
-    elif insertion_type == 'text_dct':
-        marked_image = DCTText.rgb_insert_texto(original_image, text, alpha)
+            original_image, watermark)
+    elif insertion_type == 'text_dwt':
+        marked_image = DWTImage.embed_watermark_HH_blocks(
+            original_image, watermark)
     else:
-        flash('Tipo de inserção não suportado')
+        flash('Tipo de inserção não suportado.')
         return None
 
     return marked_image
 
+
 def save_watermark_file(file):
-    watermark_filename = os.path.join(WATERMARKS_PATH, f"{str(uuid.uuid4())}.png")
+    watermark_filename = os.path.join(
+        WATERMARKS_PATH, f"{str(uuid.uuid4())}.png")
     file.save(watermark_filename)
     return watermark_filename
