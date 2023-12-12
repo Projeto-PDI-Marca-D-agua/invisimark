@@ -116,7 +116,7 @@ def init_app(app):
     @login_required
     def insertion():
         user_watermarks = current_user.watermarks
-        
+
         if request.method == 'POST':
 
             if 'image' not in request.files:
@@ -125,16 +125,24 @@ def init_app(app):
 
             file = request.files['image']
             insertion_type = request.form['insertion_type']
-            watermark_file = request.files.get('watermark_file')
-            watermark_text = request.form.get('watermark_text')
+            watermark_select = request.form['watermark_select']
+            watermark_file = None
+            watermark_text = None
 
+            watermark_type = None
+            for watermark in user_watermarks:
+                if watermark['value'] == watermark_select:
+                    watermark_type = watermark['type']
+                    break
+
+            if watermark_type == 'image':
+                watermark_file = cv2.imdecode(np.fromstring(
+                    open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
+            elif watermark_type == 'text':
+                watermark_text = watermark_select
             if file.filename == '':
                 flash('Nenhum arquivo selecionado')
                 return redirect(request.url)
-
-            if watermark_file:
-                watermark_file = cv2.imdecode(np.fromstring(
-                    watermark_file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
 
             if file and allowed_file(file.filename):
                 user_filename = f"{current_user.id}-{str(uuid.uuid4())}.png"
@@ -183,7 +191,8 @@ def init_app(app):
                     flash('Nenhum arquivo selecionado')
                     return redirect(request.url)
 
-                watermark_value = save_watermark_file(watermark_file)
+                filesave = save_watermark_file(watermark_file)
+                watermark_value = os.path.basename(filesave)
             else:
                 flash('Tipo de marca d\'água inválido')
                 return redirect(request.url)
@@ -230,6 +239,6 @@ def perform_insertion(original_image, insertion_type, alpha=0.1, watermark=None,
     return marked_image
 
 def save_watermark_file(file):
-    watermark_filename = f"{str(uuid.uuid4())}.png"
+    watermark_filename = os.path.join(WATERMARKS_PATH, f"{str(uuid.uuid4())}.png")
     file.save(watermark_filename)
     return watermark_filename
