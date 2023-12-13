@@ -6,6 +6,9 @@ from invisimark.services.dwt_image import DWTImage
 from invisimark.services.dwt_text import DWTText
 from invisimark.services.lsb_image import LSBImage
 from invisimark.services.lsb_text import LSBText
+from invisimark.services.hs_image import HSImage
+from invisimark.services.pvd_image import PVDImage
+from invisimark.services.pvd_text import PVDText
 from invisimark.services.user_service import UserService
 import os
 import cv2
@@ -362,6 +365,14 @@ def perform_insertion(original_image, insertion_type, watermark=None, text=None)
             original_image, watermark)
     elif insertion_type == 'text_lsb':
         marked_image = LSBText.encode(original_image, text)
+    elif insertion_type == 'image_hs':
+        marked_image = HSImage.encode_HS(
+            original_image, watermark)
+    elif insertion_type == 'image_pvd':
+        marked_image = PVDImage.hide_image_pvd(
+            original_image, watermark)
+    elif insertion_type == 'text_pvd':
+        marked_image = PVDText.hide_message(original_image, text)
     else:
         flash('Tipo de inserção não suportado.')
         return None
@@ -388,6 +399,15 @@ def perform_extraction(original_image, marked_image, extraction_type, watermark=
             marked_image)
     elif extraction_type == 'text_lsb':
         watermark = LSBText.extract(marked_image)
+    elif extraction_type == 'image_hs':
+        watermark = HSImage.extract_HS(
+            original_image, marked_image)
+    elif extraction_type == 'image_pvd':
+        watermark = PVDImage.extract_image_pvd(
+            original_image, marked_image)
+    elif extraction_type == 'text_pvd':
+        watermark = PVDText.extract_message(
+            original_image, marked_image)
     else:
         flash('Tipo de extração não suportado.')
         return None
