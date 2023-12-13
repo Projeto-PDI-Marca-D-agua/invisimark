@@ -2,6 +2,11 @@
 <div
   class="flex flex-col py-10 items-center justify-center mx-auto w-full md:w-3/5"
 >
+  {% if text_watermark is defined %}
+    <div class="font-bold text-3xl py-10 px-5 dark:text-white bg-gray-100 dark:bg-gray-800 rounded-lg mb-10">
+      <h2>Texto da marca d'água: {{ text_watermark }}</h2>
+    </div>
+  {% endif %}
   <h1 class="font-semibold text-3xl pb-4 dark:text-white">
     Extrair marca d'água
   </h1>
@@ -145,14 +150,14 @@
             required
           >
             <option value="" disabled selected>Selecione uma opção</option>
-            <!-- <option value="image_dct">DCT (Imagem)</option> -->
+            <option value="image_dct">DCT (Imagem)</option>
             <!-- <option value="text_dct">DCT (Texto)</option> -->
             <option value="image_dwt">DWT (Imagem)</option>
             <!-- <option value="text_dwt">DWT (Texto)</option> -->
             <option value="image_lsb">LSB (Imagem)</option>
             <option value="text_lsb">LSB (Texto)</option>
-            <option value="image_hs">HS (Imagem)</option>
-            <option value="image_pvd">PVD (Imagem)</option>
+            <!--  <option value="text_hs">HS (Texto)</option> -->
+            <!--  <option value="image_pvd">PVD (Imagem)</option> -->
             <!-- <option value="text_pvd">PVD (Texto)</option> -->
           </select>
         </div>

@@ -6,7 +6,7 @@ from invisimark.services.dwt_image import DWTImage
 from invisimark.services.dwt_text import DWTText
 from invisimark.services.lsb_image import LSBImage
 from invisimark.services.lsb_text import LSBText
-from invisimark.services.hs_image import HSImage
+from invisimark.services.hs_image import HSText
 from invisimark.services.pvd_image import PVDImage
 from invisimark.services.pvd_text import PVDText
 from invisimark.services.user_service import UserService
@@ -207,6 +207,18 @@ def init_app(app):
                 watermark = perform_extraction(
                     original_image, marked_image, extraction_type, watermark_file, watermark_text)
 
+                if extraction_type == 'image_dwt':
+                    cv2.imwrite(os.path.join(
+                        ORIGINAL_IMAGES_PATH, 'imagem.png'), watermark[0])
+
+                    print('Correlação: ', calcular_correlacao_entre_marcas_dagua(
+                        watermark_file, watermark[0]))
+
+                    print('PSNR: ', psnr(original_image, marked_image))
+
+                    return send_file(os.path.join(
+                        ORIGINAL_IMAGES_PATH, 'imagem.png'), as_attachment=True)
+
                 if watermark_type == 'image':
                     cv2.imwrite(os.path.join(
                         ORIGINAL_IMAGES_PATH, 'imagem.png'), watermark)
@@ -219,7 +231,7 @@ def init_app(app):
                     return send_file(os.path.join(
                         ORIGINAL_IMAGES_PATH, 'imagem.png'), as_attachment=True)
                 elif watermark_type == 'text':
-                    print(watermark)
+                    return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, text_watermark=watermark)
 
         return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
 
@@ -365,9 +377,9 @@ def perform_insertion(original_image, insertion_type, watermark=None, text=None)
             original_image, watermark)
     elif insertion_type == 'text_lsb':
         marked_image = LSBText.encode(original_image, text)
-    elif insertion_type == 'image_hs':
-        marked_image = HSImage.encode_HS(
-            original_image, watermark)
+    elif insertion_type == 'text_hs':
+        marked_image = HSText.encode_HS(
+            original_image, text)
     elif insertion_type == 'image_pvd':
         marked_image = PVDImage.hide_image_pvd(
             original_image, watermark)
@@ -399,8 +411,8 @@ def perform_extraction(original_image, marked_image, extraction_type, watermark=
             marked_image)
     elif extraction_type == 'text_lsb':
         watermark = LSBText.extract(marked_image)
-    elif extraction_type == 'image_hs':
-        watermark = HSImage.extract_HS(
+    elif extraction_type == 'text_hs':
+        watermark = HSText.extract_HS(
             original_image, marked_image)
     elif extraction_type == 'image_pvd':
         watermark = PVDImage.extract_image_pvd(

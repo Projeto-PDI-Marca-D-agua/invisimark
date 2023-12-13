@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 
-class HSImage:
+class HSText:
     @staticmethod
     def string_to_bitstream(message):
         """ Convert a string to a list of binary strings """
@@ -13,7 +13,7 @@ class HSImage:
     def bitstream_to_string(bit_stream):
         """ Convert a list of binary strings to a string """
         return ''.join(chr(int(''.join(bit_stream[i:i+8]), 2)) for i in range(0, len(bit_stream), 8))
-    
+
     @staticmethod
     def histogram(image):
         num_bits = 256
@@ -32,18 +32,14 @@ class HSImage:
         return x, intensities_array
 
     @staticmethod
-    def encode_HS(img_name, text, marked_img_name):
+    def encode_HS(img_name, text):
         """ Method to hide a message in an 8-bit color image """
-        cover_image = cv2.imread(img_name)
+        cover_image = img_name
 
         # Convert message to bitstream
-        bit_stream = ''.join(HSImage.string_to_bitstream(text + '$$'))
+        bit_stream = ''.join(HSText.string_to_bitstream(text + '$$'))
 
-        # Check for 8-bit image
-        if cover_image.dtype != "uint8":
-            return -1
-
-        bins, intensities = HSImage.histogram(cover_image)
+        bins, intensities = HSText.histogram(cover_image)
         peak_point = np.argmax(intensities)
 
         # Check data stream size
@@ -72,24 +68,20 @@ class HSImage:
                     else:
                         break
 
-        return cv2.imwrite(marked_img_name, cover_image)
+        return cover_image
 
     @staticmethod
     def extract_HS(img_name, img_name2):
         """ Method to reveal a bitstream in an 8-bit color image """
 
-        marked_image = cv2.imread(img_name)
+        marked_image = img_name
 
-        original_image = cv2.imread(img_name2)
-
-        # Check for 8-bit image
-        if marked_image.dtype != "uint8":
-            return -1
+        original_image = img_name2
 
         img_height = marked_image.shape[0]
         img_width = marked_image.shape[1]
 
-        bins, intensities = HSImage.histogram(original_image)
+        bins, intensities = HSText.histogram(original_image)
         peak_point = np.argmax(intensities)
 
         # Get bitstream from the image
@@ -103,7 +95,7 @@ class HSImage:
                     elif pixel == peak_point + 1:
                         bit_stream.append('1')
 
-        message_returned = HSImage.bitstream_to_string(bit_stream)
+        message_returned = HSText.bitstream_to_string(bit_stream)
 
         # Find '$$' (which marks the end of the secret message)
         termination_index = message_returned.find('$$')
@@ -111,4 +103,3 @@ class HSImage:
             message_returned = message_returned[:termination_index]
 
         return message_returned
-    
