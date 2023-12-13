@@ -45,8 +45,7 @@ class DWTImage:
     @staticmethod
     def extract_watermark_HH_blocks(original_image, marked_image):
         alpha = 0.1
-        DWTImage.resize(original_image, marked_image)
-
+        
         b, g, r = cv2.split(marked_image)
         b_original, g_original, r_original = cv2.split(original_image)
 
