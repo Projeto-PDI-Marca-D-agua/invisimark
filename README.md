@@ -1,42 +1,45 @@
 # InvisiMark
 
-## Como executar o projeto ?
+## Como Executar o Projeto?
 
-### Adicionando pastas necessárias
+### Adicionando as Pastas Necessárias
 
-Adicione uma pasta chamada `images` no projeto e dentro adicionar as seguintes três pastas:
-- marked_images
-- original_images
-- watermarks
+1. Crie uma pasta chamada `images` no diretório raiz do projeto.
+2. Dentro da pasta `images`, crie as seguintes subpastas:
+   - `extracted_watermark`
+   - `marked_images`
+   - `watermarks`
+3. Adicione uma pasta chamada `data` no diretório raiz e crie um arquivo chamado `users.json` dentro dela. No arquivo JSON recém-criado, adicione um array vazio `[]`.
 
-Após isso adicionar uma pasta chamada `data` e dentro dela uma arquivo chamada `users.json` e no arquivo json criado, adicionem um array vazio `[]`.
+### Instalando Dependências
 
-### Instalando dependências
-
-Todas as dependências do projeto estão em um arquivo chamada requirements.txt ou package.json, para adicionar as dependências execute os seguintes comandos:
+Todas as dependências do projeto estão listadas no arquivo `requirements.txt` (Python) ou `package.json` (Node.js). Para instalar as dependências, execute os seguintes comandos:
 
 ```bash
 pip install -r requirements.txt
 ```
+
 ```bash
 npm i
 ```
 
-### Execute o projeto
+### Executando o projeto
 
-Temos dois comandos para executar o projeto, o primeiro é o mais importante:
+Existem dois comandos principais para executar o projeto:
 
 ```bash
 flask run
 ```
 
-Pois com ele executamos nosso aplicativo, já o segundo é apenas para carregas nos styles css da aplicação:
+Este comando inicia o aplicativo Flask.
 
 ```bash
 npm run tailwind
 ```
 
+Este comando carrega os estilos CSS da aplicação.
+
 ### Considerações finais
 
-- Com esses passos feitos só é preciso que você faça um cadastro e utilize a aplicação. Lembre-se de cadastrar marcas d'água para a aplicação.
-- Todos os métodos de inserção e extração de marcas d'água se encontram na pasta `invisimark/services`
+- Após seguir esses passos, basta criar um cadastro e começar a usar a aplicação. Não se esqueça de cadastrar marcas d'água para utilizar na aplicação.
+- Todos os métodos de inserção e extração de marcas d'água estão localizados na pasta `invisimark/services`.
