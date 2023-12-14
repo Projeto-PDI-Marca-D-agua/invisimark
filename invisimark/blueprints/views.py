@@ -18,7 +18,7 @@ import uuid
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 USERS_IMAGES = os.path.join(REPO_DIR, 'images')
-ORIGINAL_IMAGES_PATH = os.path.join(USERS_IMAGES, 'original_images')
+EXTRACTED_WATERMARK_PATH = os.path.join(USERS_IMAGES, 'extracted_watermark')
 MARKED_IMAGES_PATH = os.path.join(USERS_IMAGES, 'marked_images')
 WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 
@@ -26,7 +26,7 @@ WATERMARKS_PATH = os.path.join(USERS_IMAGES, 'watermarks')
 def init_app(app):
     app.secret_key = 'super secret key'
     app.config['MARKED_IMAGES_PATH'] = MARKED_IMAGES_PATH
-    app.config['ORIGINAL_IMAGES_PATH'] = ORIGINAL_IMAGES_PATH
+    app.config['EXTRACTED_WATERMARK_PATH'] = EXTRACTED_WATERMARK_PATH
     app.config['WATERMARKS_PATH'] = WATERMARKS_PATH
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
@@ -109,7 +109,7 @@ def init_app(app):
 
         if request.method == 'POST':
             if 'image' not in request.files:
-                flash('Nenhum arquivo enviado.')
+                flash('Nenhum arquivo enviado.', 'danger')
                 return redirect(request.url)
 
             file = request.files['image']
@@ -132,7 +132,7 @@ def init_app(app):
                 watermark_text = watermark_select
 
             if file.filename == '':
-                flash('Nenhum arquivo selecionado.')
+                flash('Nenhum arquivo selecionado.', 'danger')
                 return redirect(request.url)
 
             if file and allowed_file(file.filename):
@@ -148,14 +148,16 @@ def init_app(app):
                     original_image, insertion_type, watermark_file, watermark_text)
 
                 if marked_image is not None:
+                    psnr = calculate_psnr(original_image, marked_image)
+
                     cv2.imwrite(file_path, marked_image)
 
                     UserService.add_image_to_user(
                         current_user.id, user_filename)
 
-                    return send_file(file_path, as_attachment=True)
+                    return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, psnr=psnr)
             else:
-                flash('Extensão de arquivo inválida.')
+                flash('Extensão de arquivo inválida.', 'danger')
 
             return redirect(url_for('dashboard'))
 
@@ -168,7 +170,7 @@ def init_app(app):
 
         if request.method == 'POST':
             if 'markedImage' not in request.files or "originalImage" not in request.files:
-                flash('Nenhum arquivo enviado.')
+                flash('Nenhum arquivo enviado.', 'danger')
                 return redirect(request.url)
 
             marked_image = request.files['markedImage']
@@ -192,10 +194,10 @@ def init_app(app):
                 watermark_text = watermark_select
 
             if marked_image.filename == '':
-                flash('Nenhum imagem marcada selecionada.')
+                flash('Nenhum imagem marcada selecionada.', 'danger')
                 return redirect(request.url)
             elif original_image.filename == '':
-                flash('Nenhum imagem original selecionada.')
+                flash('Nenhum imagem original selecionada.', 'danger')
                 return redirect(request.url)
 
             if marked_image and original_image and allowed_file(marked_image.filename) and allowed_file(original_image.filename):
@@ -207,31 +209,23 @@ def init_app(app):
                 watermark = perform_extraction(
                     original_image, marked_image, extraction_type, watermark_file, watermark_text)
 
-                if extraction_type == 'image_dwt':
-                    cv2.imwrite(os.path.join(
-                        ORIGINAL_IMAGES_PATH, 'imagem.png'), watermark[0])
-
-                    print('Correlação: ', calcular_correlacao_entre_marcas_dagua(
-                        watermark_file, watermark[0]))
-
-                    print('PSNR: ', psnr(original_image, marked_image))
-
-                    return send_file(os.path.join(
-                        ORIGINAL_IMAGES_PATH, 'imagem.png'), as_attachment=True)
-
                 if watermark_type == 'image':
+                    correlation, watermark = verify_extract(
+                        watermark_file, watermark)
+
                     cv2.imwrite(os.path.join(
-                        ORIGINAL_IMAGES_PATH, 'imagem.png'), watermark)
+                        EXTRACTED_WATERMARK_PATH, 'extracted_watermark.png'), watermark)
 
-                    print('Correlação: ', calcular_correlacao_entre_marcas_dagua(
-                        watermark_file, watermark))
+                    send_file(os.path.join(
+                        EXTRACTED_WATERMARK_PATH, 'extracted_watermark.png'), as_attachment=True)
 
-                    print('PSNR: ', psnr(original_image, marked_image))
+                    return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, correlation=correlation)
 
-                    return send_file(os.path.join(
-                        ORIGINAL_IMAGES_PATH, 'imagem.png'), as_attachment=True)
                 elif watermark_type == 'text':
-                    return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, text_watermark=watermark)
+                    if watermark == '' or watermark == None:
+                        flash('Não foi possível extrair texto da imagem.', 'danger')
+                    else:
+                        return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, text_watermark=watermark)
 
         return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
 
@@ -246,19 +240,19 @@ def init_app(app):
                 watermark_value = request.form['watermark_text']
             elif watermark_type == 'image':
                 if 'watermark_file' not in request.files:
-                    flash('Nenhum arquivo enviado')
+                    flash('Nenhum arquivo enviado', 'danger')
                     return redirect(request.url)
 
                 watermark_file = request.files['watermark_file']
 
                 if watermark_file.filename == '':
-                    flash('Nenhum arquivo selecionado')
+                    flash('Nenhum arquivo selecionado', 'danger')
                     return redirect(request.url)
 
                 filesave = save_watermark_file(watermark_file)
                 watermark_value = os.path.basename(filesave)
             else:
-                flash('Tipo de marca d\'água inválido')
+                flash('Tipo de marca d\'água inválido', 'danger')
                 return redirect(request.url)
 
             try:
@@ -309,29 +303,46 @@ def convert_filestorage_to_numpy_array(filestorage):
     return image_array
 
 
-def calcular_correlacao_entre_marcas_dagua(marca_dagua_entrada, marca_dagua_extraida):
-    marca_dagua_extraida = DCTImage.resize(
-        marca_dagua_entrada, marca_dagua_extraida)
+def verify_extract(watermark, extracted_watermark):
 
-    if marca_dagua_entrada.shape != marca_dagua_extraida.shape:
+    if isinstance(extracted_watermark, np.ndarray) and extracted_watermark.ndim == 3:
+        correlation = calculate_watermark_correlation(
+            watermark, extracted_watermark)
+
+        return correlation, extracted_watermark
+    else:
+        correlations = [calculate_watermark_correlation(
+            watermark, block) for block in extracted_watermark]
+        max_index, max_correlation = max(
+            enumerate(correlations), key=lambda x: x[1])
+        watermark_with_max_correlation = extracted_watermark[max_index]
+
+        return max_correlation, watermark_with_max_correlation
+
+
+def calculate_watermark_correlation(watermark_input, extracted_watermark):
+    extracted_watermark = DCTImage.resize(
+        watermark_input, extracted_watermark)
+
+    if watermark_input.shape != extracted_watermark.shape:
         raise ValueError(
-            "As imagens das marcas d'água têm tamanhos diferentes")
+            "As imagens das marcas d'água têm tamanhos diferentes.")
 
-    media_entrada = np.mean(marca_dagua_entrada)
-    media_extraida = np.mean(marca_dagua_extraida)
+    input_mean = np.mean(watermark_input)
+    extracted_mean = np.mean(extracted_watermark)
 
-    diff_entrada = marca_dagua_entrada - media_entrada
-    diff_extraida = marca_dagua_extraida - media_extraida
+    input_diff = watermark_input - input_mean
+    extracted_diff = extracted_watermark - extracted_mean
 
-    termo1 = np.sum(diff_entrada * diff_extraida)
-    termo2 = np.sqrt(np.sum(diff_entrada ** 2) * np.sum(diff_extraida ** 2))
+    term1 = np.sum(input_diff * extracted_diff)
+    term2 = np.sqrt(np.sum(input_diff ** 2) * np.sum(extracted_diff ** 2))
 
-    correlacao = termo1 / termo2
+    correlation = term1 / term2
 
-    return correlacao
+    return correlation
 
 
-def psnr(original, compressed):
+def calculate_psnr(original, compressed):
     compressed = DCTImage.resize(original, compressed)
 
     if len(original.shape) == 3 and len(compressed.shape) == 3:
@@ -378,7 +389,7 @@ def perform_insertion(original_image, insertion_type, watermark=None, text=None)
     elif insertion_type == 'text_pvd':
         marked_image = PVDText.hide_message(original_image, text)
     else:
-        flash('Tipo de inserção não suportado.')
+        flash('Tipo de inserção não suportado.', 'danger')
         return None
 
     return marked_image
@@ -413,7 +424,7 @@ def perform_extraction(original_image, marked_image, extraction_type, watermark=
         watermark = PVDText.extract_message(
             original_image, marked_image)
     else:
-        flash('Tipo de extração não suportado.')
+        flash('Tipo de extração não suportado.', 'danger')
         return None
 
     return watermark

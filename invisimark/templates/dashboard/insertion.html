@@ -1,12 +1,61 @@
-{% extends "base_layout.html" %} {% block content %}
+{% extends "base_layout.html" %} {% block content %} {% with messages =
+get_flashed_messages(with_categories=true) %} {% if messages %} {% if
+messages[0][0] == 'danger' %}
 <div
-  class="flex flex-col py-10 items-center justify-center mx-auto w-full md:w-3/5"
+  id="toast-danger"
+  class="flex items-center z-50 w-full max-w-xs p-4 mb-4 fixed top-5 right-5 border-t-4 text-red-800 border-red-300 bg-red-50 dark:text-red-400 dark:bg-gray-800 dark:border-red-800"
+  role="alert"
 >
-  <h1 class="font-semibold text-3xl pb-4 dark:text-white">
-    Inserir marca d'água
-  </h1>
   <div
-    class="w-4/5 bg-white p-10 rounded-xl shadow dark:border md:mt-0 dark:bg-gray-800 dark:border-gray-700"
+    class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg dark:bg-red-800 dark:text-red-200"
+  >
+    <svg
+      class="w-5 h-5"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+      viewBox="0 0 20 20"
+    >
+      <path
+        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"
+      />
+    </svg>
+    <span class="sr-only">Error icon</span>
+  </div>
+  <div class="ms-3 text-sm font-medium">
+    <p>{{ messages[0][1] }}</p>
+  </div>
+  <button
+    type="button"
+    class="ms-auto -mx-1.5 -my-1.5 bg-red-50 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex items-center justify-center h-8 w-8 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-gray-700"
+    data-dismiss-target="#toast-danger"
+    aria-label="Close"
+  >
+    <span class="sr-only">Close</span>
+    <svg
+      class="w-3 h-3"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 14 14"
+    >
+      <path
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+      />
+    </svg>
+  </button>
+</div>
+{% endif %} {% endif %} {% endwith %}
+<div
+  class="flex flex-col py-10 space-y-8 items-center justify-center mx-auto w-full md:w-3/5"
+>
+  <h1 class="font-semibold text-3xl dark:text-white">Inserir marca d'água</h1>
+  <div
+    class="w-4/5 bg-white p-10 rounded-xl shadow dark:border dark:bg-gray-800 dark:border-gray-700"
   >
     <form
       class="flex flex-col gap-5"
@@ -126,78 +175,85 @@
       </button>
     </form>
   </div>
-</div>
-<script>
-  function toggleWatermarkInput(selectElement) {
-    var watermarkSelect = document.getElementById("watermark_select");
-    var imageWatermarks = document.querySelectorAll(".image-watermark");
-    var textWatermarks = document.querySelectorAll(".text-watermark");
+  {% if psnr is defined %}
+  <div
+    class="font-bold text-3xl py-10 px-5 dark:text-white bg-gray-100 dark:bg-gray-800 rounded-lg mb-10"
+  >
+    <h2>PSNR: {{ psnr }}</h2>
+  </div>
+  {% endif %}
+  <script>
+    function toggleWatermarkInput(selectElement) {
+      var watermarkSelect = document.getElementById("watermark_select");
+      var imageWatermarks = document.querySelectorAll(".image-watermark");
+      var textWatermarks = document.querySelectorAll(".text-watermark");
 
-    for (var i = 0; i < imageWatermarks.length; i++) {
-      imageWatermarks[i].style.display = "none";
-    }
-
-    for (var i = 0; i < textWatermarks.length; i++) {
-      textWatermarks[i].style.display = "none";
-    }
-
-    if (selectElement.value.startsWith("image")) {
       for (var i = 0; i < imageWatermarks.length; i++) {
-        imageWatermarks[i].style.display = "block";
+        imageWatermarks[i].style.display = "none";
       }
-    } else if (selectElement.value.startsWith("text")) {
+
       for (var i = 0; i < textWatermarks.length; i++) {
-        textWatermarks[i].style.display = "block";
+        textWatermarks[i].style.display = "none";
+      }
+
+      if (selectElement.value.startsWith("image")) {
+        for (var i = 0; i < imageWatermarks.length; i++) {
+          imageWatermarks[i].style.display = "block";
+        }
+      } else if (selectElement.value.startsWith("text")) {
+        for (var i = 0; i < textWatermarks.length; i++) {
+          textWatermarks[i].style.display = "block";
+        }
+      }
+
+      watermarkSelect.value = "";
+    }
+
+    function handleImageSelection() {
+      const svgContainer = document.getElementById("svgContainer");
+      const selectedImagePreview = document.getElementById(
+        "selectedImagePreview"
+      );
+      const imageSelectedMsg = document.getElementById("imageSelectedMsg");
+      const imageInput = document.getElementById("image");
+      const imageLabel = document.getElementById("imageLabel");
+
+      if (imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          svgContainer.style.display = "none";
+
+          selectedImagePreview.src = e.target.result;
+          selectedImagePreview.classList.remove("hidden");
+
+          imageSelectedMsg.style.display = "none";
+
+          imageLabel.classList.remove(
+            "flex",
+            "flex-col",
+            "items-center",
+            "justify-center",
+            "w-full",
+            "h-64",
+            "border-2",
+            "border-gray-300",
+            "border-dashed",
+            "rounded-lg",
+            "cursor-pointer",
+            "bg-gray-50",
+            "dark:hover:bg-bray-800",
+            "dark:bg-gray-700",
+            "hover:bg-gray-100",
+            "dark:border-gray-600",
+            "dark:hover:border-gray-500",
+            "dark:hover:bg-gray-600"
+          );
+        };
+
+        reader.readAsDataURL(imageInput.files[0]);
       }
     }
-
-    watermarkSelect.value = "";
-  }
-
-  function handleImageSelection() {
-    const svgContainer = document.getElementById("svgContainer");
-    const selectedImagePreview = document.getElementById(
-      "selectedImagePreview"
-    );
-    const imageSelectedMsg = document.getElementById("imageSelectedMsg");
-    const imageInput = document.getElementById("image");
-    const imageLabel = document.getElementById("imageLabel");
-
-    if (imageInput.files && imageInput.files[0]) {
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        svgContainer.style.display = "none";
-
-        selectedImagePreview.src = e.target.result;
-        selectedImagePreview.classList.remove("hidden");
-
-        imageSelectedMsg.style.display = "none";
-
-        imageLabel.classList.remove(
-          "flex",
-          "flex-col",
-          "items-center",
-          "justify-center",
-          "w-full",
-          "h-64",
-          "border-2",
-          "border-gray-300",
-          "border-dashed",
-          "rounded-lg",
-          "cursor-pointer",
-          "bg-gray-50",
-          "dark:hover:bg-bray-800",
-          "dark:bg-gray-700",
-          "hover:bg-gray-100",
-          "dark:border-gray-600",
-          "dark:hover:border-gray-500",
-          "dark:hover:bg-gray-600"
-        );
-      };
-
-      reader.readAsDataURL(imageInput.files[0]);
-    }
-  }
-</script>
-{% endblock %}
+  </script>
+  {% endblock %}
+</div>
