@@ -155,6 +155,8 @@ def init_app(app):
                     UserService.add_image_to_user(
                         current_user.id, user_filename)
 
+                    send_file(file_path, as_attachment=True)
+
                     return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, psnr=psnr)
             else:
                 flash('Extensão de arquivo inválida.', 'danger')
