@@ -9,7 +9,7 @@ Adicione uma pasta chamada `images` no projeto e dentro adicionar as seguintes t
 - original_images
 - watermarks
 
-Após isso adicionar uma pasta chamada `data` e dentro dela uma arquivo chamada users.json
+Após isso adicionar uma pasta chamada `data` e dentro dela uma arquivo chamada `users.json` e no arquivo json criado, adicionem um array vazio `[]`.
 
 ### Instalando dependências
 
