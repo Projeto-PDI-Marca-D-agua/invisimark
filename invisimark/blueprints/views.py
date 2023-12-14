@@ -4,6 +4,11 @@ from invisimark.services.dct_image import DCTImage
 from invisimark.services.dct_text import DCTText
 from invisimark.services.dwt_image import DWTImage
 from invisimark.services.dwt_text import DWTText
+from invisimark.services.lsb_image import LSBImage
+from invisimark.services.lsb_text import LSBText
+from invisimark.services.hs_image import HSText
+from invisimark.services.pvd_image import PVDImage
+from invisimark.services.pvd_text import PVDText
 from invisimark.services.user_service import UserService
 import os
 import cv2
@@ -181,8 +186,8 @@ def init_app(app):
                     break
 
             if watermark_type == 'image':
-                watermark_file = cv2.imdecode(np.fromstring(
-                    open(os.path.join(app.config['WATERMARKS_PATH'], watermark_select), 'rb').read(), np.uint8), cv2.IMREAD_UNCHANGED)
+                watermark_file = convertNpArray(
+                    watermark_select, app.config['WATERMARKS_PATH'])
             elif watermark_type == 'text':
                 watermark_text = watermark_select
 
@@ -194,8 +199,39 @@ def init_app(app):
                 return redirect(request.url)
 
             if marked_image and original_image and allowed_file(marked_image.filename) and allowed_file(original_image.filename):
+                marked_image = convert_filestorage_to_numpy_array(
+                    marked_image)
+                original_image = convert_filestorage_to_numpy_array(
+                    original_image)
+
                 watermark = perform_extraction(
                     original_image, marked_image, extraction_type, watermark_file, watermark_text)
+
+                if extraction_type == 'image_dwt':
+                    cv2.imwrite(os.path.join(
+                        ORIGINAL_IMAGES_PATH, 'imagem.png'), watermark[0])
+
+                    print('Correlação: ', calcular_correlacao_entre_marcas_dagua(
+                        watermark_file, watermark[0]))
+
+                    print('PSNR: ', psnr(original_image, marked_image))
+
+                    return send_file(os.path.join(
+                        ORIGINAL_IMAGES_PATH, 'imagem.png'), as_attachment=True)
+
+                if watermark_type == 'image':
+                    cv2.imwrite(os.path.join(
+                        ORIGINAL_IMAGES_PATH, 'imagem.png'), watermark)
+
+                    print('Correlação: ', calcular_correlacao_entre_marcas_dagua(
+                        watermark_file, watermark))
+
+                    print('PSNR: ', psnr(original_image, marked_image))
+
+                    return send_file(os.path.join(
+                        ORIGINAL_IMAGES_PATH, 'imagem.png'), as_attachment=True)
+                elif watermark_type == 'text':
+                    return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, text_watermark=watermark)
 
         return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks)
 
@@ -265,6 +301,66 @@ def convertNpArray(input, path_config):
     return file
 
 
+def convert_filestorage_to_numpy_array(filestorage):
+    file_bytes = filestorage.read()
+    image_array = cv2.imdecode(np.frombuffer(
+        file_bytes, np.uint8), cv2.IMREAD_COLOR)
+
+    return image_array
+
+
+def calcular_correlacao_entre_marcas_dagua(marca_dagua_entrada, marca_dagua_extraida):
+    marca_dagua_extraida = DCTImage.resize(
+        marca_dagua_entrada, marca_dagua_extraida)
+
+    # Verificando se as duas imagens têm o mesmo tamanho
+    if marca_dagua_entrada.shape != marca_dagua_extraida.shape:
+        raise ValueError(
+            "As imagens das marcas d'água têm tamanhos diferentes")
+
+    # Calculando a média das intensidades de pixel para ambas as imagens
+    media_entrada = np.mean(marca_dagua_entrada)
+    media_extraida = np.mean(marca_dagua_extraida)
+
+    # Calculando a diferença entre as intensidades de pixel e a média
+    diff_entrada = marca_dagua_entrada - media_entrada
+    diff_extraida = marca_dagua_extraida - media_extraida
+
+    # Calculando os termos para a fórmula da correlação cruzada normalizada
+    termo1 = np.sum(diff_entrada * diff_extraida)
+    termo2 = np.sqrt(np.sum(diff_entrada ** 2) * np.sum(diff_extraida ** 2))
+
+    # Calculando a correlação cruzada normalizada
+    correlacao = termo1 / termo2
+
+    return correlacao
+
+
+def psnr(original, compressed):
+    compressed = DCTImage.resize(original, compressed)
+
+    if len(original.shape) == 3 and len(compressed.shape) == 3:
+        # Supondo que original e compressed sejam imagens coloridas no formato RGB
+        mse_r = np.mean((original[:, :, 0] - compressed[:, :, 0]) ** 2)
+        mse_g = np.mean((original[:, :, 1] - compressed[:, :, 1]) ** 2)
+        mse_b = np.mean((original[:, :, 2] - compressed[:, :, 2]) ** 2)
+
+        # Calcula a média dos MSEs dos canais R, G e B
+        mse_total = (mse_r + mse_g + mse_b) / 3
+
+    elif len(original.shape) == 2 and len(compressed.shape) == 2:
+        # Se as imagens forem em escala de cinza (um único canal)
+        mse_total = np.mean((original - compressed) ** 2)
+
+    if mse_total == 0:
+        return float('inf')
+
+    max_pixel = 255.0
+    psnr = 20 * np.log10(max_pixel / np.sqrt(mse_total))
+
+    return psnr
+
+
 def perform_insertion(original_image, insertion_type, watermark=None, text=None):
     if insertion_type == 'image_dct':
         marked_image = DCTImage.rgb_insert_dct(
@@ -276,6 +372,19 @@ def perform_insertion(original_image, insertion_type, watermark=None, text=None)
             original_image, watermark)
     elif insertion_type == 'text_dwt':
         marked_image = DWTText.embed_text_watermark(original_image, text)
+    elif insertion_type == 'image_lsb':
+        marked_image = LSBImage.embed_LSB_image(
+            original_image, watermark)
+    elif insertion_type == 'text_lsb':
+        marked_image = LSBText.encode(original_image, text)
+    elif insertion_type == 'text_hs':
+        marked_image = HSText.encode_HS(
+            original_image, text)
+    elif insertion_type == 'image_pvd':
+        marked_image = PVDImage.hide_image_pvd(
+            original_image, watermark)
+    elif insertion_type == 'text_pvd':
+        marked_image = PVDText.hide_message(original_image, text)
     else:
         flash('Tipo de inserção não suportado.')
         return None
@@ -284,6 +393,8 @@ def perform_insertion(original_image, insertion_type, watermark=None, text=None)
 
 
 def perform_extraction(original_image, marked_image, extraction_type, watermark=None, text=None):
+    marked_image = DCTImage.resize(original_image, marked_image)
+
     if extraction_type == 'image_dct':
         watermark = DCTImage.rgb_remove_dct(original_image, marked_image)
     elif extraction_type == 'text_dct':
@@ -295,6 +406,20 @@ def perform_extraction(original_image, marked_image, extraction_type, watermark=
     elif extraction_type == 'text_dwt':
         watermark = DWTText.extract_text_watermark(
             original_image, marked_image, len(text))
+    elif extraction_type == 'image_lsb':
+        watermark = LSBImage.blind_extraction_LSB(
+            marked_image)
+    elif extraction_type == 'text_lsb':
+        watermark = LSBText.extract(marked_image)
+    elif extraction_type == 'text_hs':
+        watermark = HSText.extract_HS(
+            original_image, marked_image)
+    elif extraction_type == 'image_pvd':
+        watermark = PVDImage.extract_image_pvd(
+            original_image, marked_image)
+    elif extraction_type == 'text_pvd':
+        watermark = PVDText.extract_message(
+            original_image, marked_image)
     else:
         flash('Tipo de extração não suportado.')
         return None

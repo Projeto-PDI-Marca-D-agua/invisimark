@@ -32,7 +32,7 @@ class UserService:
             "email": email,
             "password": password,
             "images": [],
-            "watermark": []
+            "watermarks": []
         }
 
         users.append(new_user)
@@ -97,7 +97,8 @@ class UserService:
                     UserService._save_users_to_file(users)
                     return
                 else:
-                    raise ValueError('O usuário atingiu o limite máximo de 5 marcas d\'água')
+                    raise ValueError(
+                        'O usuário atingiu o limite máximo de 5 marcas d\'água')
 
 
 class User(UserMixin):
