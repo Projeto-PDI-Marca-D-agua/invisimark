@@ -92,6 +92,11 @@ def init_app(app):
     @login_required
     def get_watermark(filename):
         return send_from_directory(app.config['WATERMARKS_PATH'], filename)
+    
+    @app.route('/images/extracted_watermark/<filename>')
+    @login_required
+    def get_extracted_watermark(filename):
+        return send_from_directory(app.config['EXTRACTED_WATERMARK_PATH'], filename)
 
     @app.route('/dashboard/insertion', methods=['GET', 'POST'])
     @login_required
@@ -212,7 +217,7 @@ def init_app(app):
                     send_file(os.path.join(
                         EXTRACTED_WATERMARK_PATH, 'extracted_watermark.png'), as_attachment=True)
 
-                    return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, correlation=correlation)
+                    return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, correlation=correlation, file_name='extracted_watermark.png')
 
                 elif watermark_type == 'text':
                     if watermark == '' or watermark == None:
@@ -262,6 +267,16 @@ def init_app(app):
     @login_required
     def download_image(filename):
         return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename, as_attachment=True)
+    
+    @app.route('/download/watermark/<filename>')
+    @login_required
+    def download_watermark(filename):
+        return send_from_directory(app.config['WATERMARKS_PATH'], filename, as_attachment=True)
+    
+    @app.route('/download/extracted_watermark/<filename>')
+    @login_required
+    def download_extracted_watermark(filename):
+        return send_from_directory(app.config['EXTRACTED_WATERMARK_PATH'], filename, as_attachment=True)
 
     @app.route('/dashboard/mywatermarks')
     @login_required
