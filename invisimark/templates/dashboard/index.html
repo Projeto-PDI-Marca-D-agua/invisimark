@@ -81,15 +81,35 @@ messages[0][0] == 'success' %}
   <div
     class="bg-gray-50 p-8 rounded-lg dark:bg-gray-800 dark:border dark:border-gray-700"
   >
-    <div class="columns-2 md:columns-3 lg:columns-4">
+    <div class="columns-2 md:columns-3 lg:columns-4 relative">
       {% for image_path in user_images %}
-      <div
-        class="relative mb-4 before:content-[''] before:rounded-md before:absolute before:inset-0 before:bg-black before:bg-opacity-20"
-      >
+      <div class="relative mb-4">
         <img
           class="w-full rounded-md"
           src="{{ url_for('get_image', filename=image_path) }}"
         />
+        <a
+          href="{{ url_for('download_image', filename=image_path) }}"
+          class="btn-download absolute top-0 right-0 mt-2 mr-2"
+        >
+          <button class="btn-download bg-red-500 text-white px-2 py-1 rounded">
+            <svg
+              class="w-6 h-6 text-gray-800 dark:text-white"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 16 18"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 1v11m0 0 4-4m-4 4L4 8m11 4v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-3"
+              />
+            </svg>
+          </button>
+        </a>
       </div>
       {% endfor %}
     </div>

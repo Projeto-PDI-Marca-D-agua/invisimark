@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-# from PIL import Image
 import random
 
 
@@ -16,18 +15,15 @@ class LSBText:
     @staticmethod
     def hide_text(img, data):
         data_index = 0
-        # '##' at the beginning of the message
         data = '##' + data + '$$'
         binary_data = LSBText.convert_data_to_binary(data)
         len_data = len(binary_data)
         width, height, _ = img.shape
 
-        # Divide the image into blocks
         block_size = 100
         blocks = [img[i:i+block_size, j:j+block_size]
                   for i in range(0, width, block_size) for j in range(0, height, block_size)]
 
-        # Randomly select half of the blocks
         num_blocks = len(blocks)
         selected_blocks = random.sample(blocks, num_blocks // 2)
 
@@ -37,7 +33,7 @@ class LSBText:
             for i in range(rows):
                 for j in range(cols):
                     if data_index < len_data:
-                        for k in range(3):  # Red, Green, Blue channels
+                        for k in range(3):
                             if data_index < len_data:
                                 block[i, j, k] = int(format(block[i, j, k], '08b')[
                                                      :-1] + binary_data[data_index], 2)
@@ -56,7 +52,6 @@ class LSBText:
 
         width, height, _ = image.shape
 
-        # Hide the data in the image
         img = image.copy()
         img = LSBText.hide_text(img, text)
 
@@ -67,7 +62,6 @@ class LSBText:
         width, height, _ = img.shape
         found_data = False
 
-        # Divide the image into blocks
         block_size = 100
         blocks = [img[i:i+block_size, j:j+block_size]
                   for i in range(0, width, block_size) for j in range(0, height, block_size)]
@@ -91,7 +85,7 @@ class LSBText:
                 chars = chr(int(all_bytes[i], 2)) + chr(int(all_bytes[i+1], 2))
                 if chars == '##' and not data_started:
                     data_started = True
-                    i += 1  # Next byte because we've already processed it
+                    i += 1
                 elif data_started:
                     readable_data += chr(int(all_bytes[i], 2))
                     if readable_data[-2:] == "$$":
