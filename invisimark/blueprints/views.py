@@ -258,6 +258,11 @@ def init_app(app):
 
         return render_template('dashboard/addwatermark.html', username=current_user.name, email=current_user.email)
 
+    @app.route('/download/image/<filename>')
+    @login_required
+    def download_image(filename):
+        return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename, as_attachment=True)
+
     @app.route('/dashboard/mywatermarks')
     @login_required
     def watermarks():
