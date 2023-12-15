@@ -92,7 +92,7 @@ def init_app(app):
     @login_required
     def get_watermark(filename):
         return send_from_directory(app.config['WATERMARKS_PATH'], filename)
-    
+
     @app.route('/images/extracted_watermark/<filename>')
     @login_required
     def get_extracted_watermark(filename):
@@ -144,16 +144,15 @@ def init_app(app):
                     original_image, insertion_type, watermark_file, watermark_text)
 
                 if marked_image is not None:
-                    psnr = ImageProcessor.calculate_psnr(original_image, marked_image)
+                    psnr = ImageProcessor.calculate_psnr(
+                        original_image, marked_image)
 
                     cv2.imwrite(file_path, marked_image)
 
                     UserService.add_image_to_user(
                         current_user.id, user_filename)
 
-                    send_file(file_path, as_attachment=True)
-
-                    return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, psnr=psnr)
+                    return render_template('dashboard/insertion.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, psnr=psnr, file_name=user_filename)
             else:
                 flash('Extensão de arquivo inválida.', 'danger')
 
@@ -214,9 +213,6 @@ def init_app(app):
                     cv2.imwrite(os.path.join(
                         EXTRACTED_WATERMARK_PATH, 'extracted_watermark.png'), watermark)
 
-                    send_file(os.path.join(
-                        EXTRACTED_WATERMARK_PATH, 'extracted_watermark.png'), as_attachment=True)
-
                     return render_template('/dashboard/extraction.html', username=current_user.name, email=current_user.email, user_watermarks=user_watermarks, correlation=correlation, file_name='extracted_watermark.png')
 
                 elif watermark_type == 'text':
@@ -267,12 +263,12 @@ def init_app(app):
     @login_required
     def download_image(filename):
         return send_from_directory(app.config['MARKED_IMAGES_PATH'], filename, as_attachment=True)
-    
+
     @app.route('/download/watermark/<filename>')
     @login_required
     def download_watermark(filename):
         return send_from_directory(app.config['WATERMARKS_PATH'], filename, as_attachment=True)
-    
+
     @app.route('/download/extracted_watermark/<filename>')
     @login_required
     def download_extracted_watermark(filename):
